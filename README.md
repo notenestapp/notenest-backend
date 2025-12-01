@@ -19,7 +19,6 @@ The backend is powered by Flask and Appwrite, exposing a clean API for users, no
 
 
     🏗 Project Structure
-    Structure
         notenest-backend/
         ├── app.py
         ├── requirements.txt
