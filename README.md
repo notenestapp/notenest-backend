@@ -5,44 +5,44 @@ The backend is powered by Flask and Appwrite, exposing a clean API for users, no
 
 🚀 Features
 
-User Authentication Token-based email/password login.
-
-Notes System Create, update, delete, organize, and fetch notes.
-
-Folder & Chapter Support Structured note organization.
-
-Payments Integration Paystack-powered credit and subscription handling.
-
-File Storage Upload, fetch, and delete files through backend endpoints.
-
-Modular Architecture Routes, services, models, and utils organized for long-term maintainability.
+    User Authentication Token-based email/password login.
+    
+    Notes System Create, update, delete, organize, and fetch notes.
+    
+    Folder & Chapter Support Structured note organization.
+    
+    Payments Integration Paystack-powered credit and subscription handling.
+    
+    File Storage Upload, fetch, and delete files through backend endpoints.
+    
+    Modular Architecture Routes, services, models, and utils organized for long-term maintainability.
 
 🏗 Project Structure
 notenest-backend/
-├── app.py
-├── requirements.txt
-├── .env.example
-├── .render.yaml
-├── config/
-│   └── appwrite.py
-├── routes/
-│   ├── notes.py
-│   ├── users.py
-│   ├── payments.py
-│   └── files.py
-├── services/
-│   ├── notes_service.py
-│   ├── users_service.py
-│   ├── payments_service.py
-│   └── files_service.py
-├── models/
-│   └── schemas.py
-├── utils/
-│   ├── auth.py
-│   ├── validation.py
-│   └── errors.py
-└── chroma/
-    └── chroma_setup.py
+    ├── app.py
+    ├── requirements.txt
+    ├── .env.example
+    ├── .render.yaml
+    ├── config/
+    │   └── appwrite.py
+    ├── routes/
+    │   ├── notes.py
+    │   ├── users.py
+    │   ├── payments.py
+    │   └── files.py
+    ├── services/
+    │   ├── notes_service.py
+    │   ├── users_service.py
+    │   ├── payments_service.py
+    │   └── files_service.py
+    ├── models/
+    │   └── schemas.py
+    ├── utils/
+    │   ├── auth.py
+    │   ├── validation.py
+    │   └── errors.py
+    └── chroma/
+        └── chroma_setup.py
 
 
 Each feature lives in its own route and service. Validation and error-handling are centralized so the codebase stays clean as the app grows.
@@ -55,14 +55,14 @@ git clone https://github.com/yourusername/notenest-backend.git
 cd notenest-backend
 
 
-Install dependencies:
+*Install dependencies:*
 
-pip install -r requirements.txt
-
-
-Copy the environment file:
-
-cp .env.example .env
+        pip install -r requirements.txt
+        
+        
+        Copy the environment file:
+        
+        cp .env.example .env
 
 
 Fill in your environment variables:
