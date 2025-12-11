@@ -6,27 +6,29 @@ def main(notes):
     #try:
 
     #STEP 1: Extract Documents
-    try:
-        from text_exctraction import ocr, extract_pdf, extract_docx
-        text = "" #The extracted text
-        if notes.endswith(".pdf"):
-            print("Extracting from pdf")
-            text = extract_pdf(notes)
-            print(text)
-            print("Text extracted successfully")
-
-        elif notes.endswith(".docx"):
-            #Docx extraction
-            print("\nExtracting from docx")
-            text = extract_docx(notes)
-            print(text)
-
-        else:#Anything else the OCR will handle it.
-            #OCR extraction
-            print("\nRunning OCR")
-            text = ocr(notes)[1]
-            #print(text)
     
+    try:
+        text = "" #The extracted text
+        for note in notes:
+            from text_exctraction import ocr, extract_pdf, extract_docx
+            if note.endswith(".pdf"):
+                print("Extracting from pdf")
+                text = extract_pdf(note)
+                print(text)
+                print("Text extracted successfully")
+
+            elif note.endswith(".docx"):
+                #Docx extraction
+                print("\nExtracting from docx")
+                text = extract_docx(note)
+                print(text)
+
+            else:#Anything else the OCR will handle it.
+                #OCR extraction
+                print("\nRunning OCR")
+                text = ocr(note)[1]
+                #print(text)
+        
     except Exception as e:
         print(f"Couldn't extract text from images. Error: {e}")
 
@@ -75,7 +77,8 @@ def main(notes):
     name = "Knowledge_Expansion_Database"
     knowledge_expansion_collection = chroma_db(name)#The database for knowledge expansion
     chunk_number = 0
-    regenerated_note = []
+    regenerated_note = ""
+    youtube_links = [] #The list of youtube links gotten from google CSE
 
 
     for chunk in all_chunks:
@@ -96,7 +99,7 @@ def main(notes):
             
             regenerated_chunk = llama_3_3_70b_versatile2(regen_system_prompt, regen_user_prompt)
             print (f"\n-----✅This is the final regenerated content of chunk number {chunk_number}✅----\n{regenerated_chunk}")
-            regenerated_note.append(regenerated_chunk)
+            regenerated_note += "\n".join(regenerated_chunk)
 
         else:
             #STEP 3: Classify each chunk as Explanation, Example, Formular or Reference
@@ -125,7 +128,7 @@ def main(notes):
                     print(label)
 
                     from LLM import qwen_qwen3_32b #Import the llm
-                    from prompts import classification_user_prompt, search_queries_system_prompt, generate_example_question, generate_explanation_question, generate_general_questions #import the prompt
+                    from prompts import classification_user_prompt, search_queries_system_prompt, generate_example_question, generate_explanation_question, generate_general_questions#import the prompt
                     import prompts #To import the classification system prompt
 
                     #For classification of the chunk
@@ -174,10 +177,9 @@ def main(notes):
                 google_search_api_key = "AIzaSyD42uygkZbP1epbWKj9p--yvKCDTJt-FrM"
                 search_engine_id = ["d3098cdee83bc4200", "d19967565d73e4696"]#One id is for google search and the other is for YouTube search
                 google_links = [] #The list of links gotten from google CSE
-                youtube_links = [] #The list of youtube links gotten from google CSE
+                
                 runs = 0
-                no_of_youtube_videos = 2#This will later be calculated from implicit personalisation. To know how many youtube links to be put inside
-
+                
                 from search_and_scrape import build_payload, make_requests, scraped_content, clean_scraped_text, categorize_link
                 for query in all_search_questions:
                     for id in search_engine_id:
@@ -231,6 +233,13 @@ def main(notes):
 
             except Exception as e:
                 print(f"Something went wrong while running knowledge expansion and trying to scrape content. Error: {e}")
+                from prompts import fallback_user_prompt
+                fall_back_user_prompt = fallback_user_prompt(chunk_text, chunk_token_count)
+            
+                regenerated_chunk = llama_3_3_70b_versatile2(regen_system_prompt, fall_back_user_prompt)
+                #print (f"-----✅This is the final regenerated content of chunk number {chunk_number}✅----\n{regenerated_chunk}")
+                regenerated_note += "\n".join(regenerated_chunk)
+
 
 
             try:
@@ -249,13 +258,24 @@ def main(notes):
                 regen_user_prompt = regeneration_user_prompt(chunk_text, chunk_token_count, trauncate_scrapped_content)
             
                 regenerated_chunk = llama_3_3_70b_versatile2(regen_system_prompt, regen_user_prompt)
-                print (f"-----✅This is the final regenerated content of chunk number {chunk_number}✅----\n{regenerated_chunk}")
-                regenerated_note.append(regenerated_chunk)
+                #print (f"-----✅This is the final regenerated content of chunk number {chunk_number}✅----\n{regenerated_chunk}")
+                regenerated_note += "\n".join(regenerated_chunk)
 
                 #print(f"-----Result from save the expansion: {save_the_expansion}------")
 
+                #Finally, join all the chunks
+                no_of_youtube_videos = 2#This will later be calculated from implicit personalisation. To know how many youtube links to be put inside
+
             except Exception as e:
                 print(f"-----Something went wrong while trying to cache knowledge expansion. Error: {e}-----")
+
+    from prompts import merge_regeneration_user_prompt
+    merge_user_prompt = merge_regeneration_user_prompt(regenerated_note, youtube_links)
+    final_note = llama_3_3_70b_versatile2(regen_system_prompt, merge_user_prompt)
+
+    print(final_note) 
+
+
 
 
     #except Exception as e:
