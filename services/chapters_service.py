@@ -1,7 +1,13 @@
 from config.appwrite import database, COLLECTIONS
 from appwrite.id import ID
 from appwrite.query import Query
+from typing import TypeVar, List
 import os
+from ai_features.note_generation.main import main
+
+from services.files_service import get_file_url, upload_file
+
+T = TypeVar('T')
 
 CHAPTER_COL = COLLECTIONS['chapters']
 DB_ID = os.getenv("APPWRITE_DATABASE_ID")
@@ -16,7 +22,46 @@ def create_chapter(data: dict):
         document_id=ID.unique(),
         data=data
     )
-    return new_doc
+
+def cut_text(text: str, length: int = 100) -> str:
+    # THis function gets the description of the chapter by cutting the regenerated note and returning the first 100 chars
+    if not isinstance(text, str):
+        raise TypeError("text must be a string")
+
+    if length < 0:
+        raise ValueError("length must be non-negative")
+
+    return text[:length]
+
+
+def generate_chapter(note_id, fileObj: List[T]):
+    try:
+        urls = []
+
+        # For each object, upload the file and add the url to the list
+        for obj in fileObj:
+            saved = upload_file(obj)
+            url = get_file_url(saved["$id"])
+            image_urls += url
+
+        # Generate new note from ai
+        chapter = main(urls)
+
+        #Upload Note to appwrite and get the response body
+        response = create_chapter({
+            "noteId": note_id,
+            "title": chapter['title'],
+            "content": chapter["content"],
+            "description": cut_text(chapter['content']),
+            "file": urls
+        })
+
+        # Return response to route function
+        return response
+
+    except Exception as e:
+        raise e
+
 
 
 def fetchAll(user_id: str):
@@ -54,7 +99,6 @@ def query_chapters(filters):
             collection_id=CHAPTER_COL,
             queries=queries
         )
-        print("RESULT", results)
 
         return results['documents']
     

@@ -1,0 +1,4 @@
+engagement_id,user_id,session_id,text_minutes,video_minutes,timestamp
+e1,u1,s1,6.0,18.0,2025-09-3010:20:00
+e2,u2,s2,5.0,2.0,2025-09-3010:45:00
+e3,u1,s3,8.0,25.0,2025-09-3011:30:00

@@ -1,0 +1,4 @@
+session_id,user_id,note_image_path,generated_text(preview),text_offered_minutes,video_ids,video_offered_minutes,timestamp
+s1,u1,img/note1.jpg,"MillerIndicesexplanation",8.5,[abc123 def456],22.0,2025-09-3010:00:00
+s2,u2,img/note2.jpg,"Thermodynamicsbasics",5.2,[ghi 789],12.0,2025-09-3010:30:00
+s3,u1,img/note3.jpg,"Vectorcalculussummary",10.0,[xyz 555],30.5,2025-09-3011:00:00

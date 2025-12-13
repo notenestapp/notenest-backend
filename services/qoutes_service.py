@@ -8,7 +8,6 @@ DB_ID = os.getenv("APPWRITE_DATABASE_ID")
 
 def create_quote(data: dict):
    try: 
-        
         new_doc = database.create_document(
             database_id=DB_ID,
             collection_id=QUOTES_COL,
@@ -42,7 +41,6 @@ def query_quotes(filters):
             collection_id=QUOTES_COL,
             queries=queries
         )
-        print("RESULT", results)
 
         return results['documents']
     except Exception as e:

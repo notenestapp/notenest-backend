@@ -15,7 +15,7 @@ def create():
     # except Exception as e:
     #     return jsonify({"error": str(e)}), 400
     
-    quote = create_quote(body)
+    quote = create_quote(body['data'])
     return jsonify({"data": quote}), 201
 
 
@@ -23,7 +23,6 @@ def create():
 @limiter.limit("10 per minute")
 def get_quotes():
     filters = request.args.to_dict()
-    print("FILTERS: ", filters)
     data = query_quotes(filters)
     return {"data": data}, 200
 
@@ -52,7 +51,7 @@ def fetch(quote_id):
 def update(quote_id):
     body = request.get_json()
 
-    quote = update_quote(quote_id, body)
+    quote = update_quote(quote_id, body['data'])
     return jsonify({"data": quote})
 
 
