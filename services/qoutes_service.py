@@ -7,16 +7,16 @@ QUOTES_COL = COLLECTIONS['quotes']
 DB_ID = os.getenv("APPWRITE_DATABASE_ID")
 
 def create_quote(data: dict):
-    # if not data.get("users"):
-    #     raise ApiError("User id required", 400)
-    
-    new_doc = database.create_document(
-        database_id=DB_ID,
-        collection_id=QUOTES_COL,
-        document_id=ID.unique(),
-        data=data
-    )
-    return new_doc
+   try: 
+        new_doc = database.create_document(
+            database_id=DB_ID,
+            collection_id=QUOTES_COL,
+            document_id=ID.unique(),
+            data=data
+        )
+        return new_doc
+   except Exception as e:
+       raise e
 
 
 ALLOWED_FILTERS = {
@@ -27,22 +27,24 @@ ALLOWED_FILTERS = {
 }
 
 def query_quotes(filters):
-    queries = []
+    try: 
+        queries = []
 
-    for key, val in filters.items():
-        if key not in ALLOWED_FILTERS:
-            raise KeyError(f"Filter '{key}' is not allowed")
-        appwrite_field = ALLOWED_FILTERS[key]
-        queries.append(Query.equal(appwrite_field, val))
+        for key, val in filters.items():
+            if key not in ALLOWED_FILTERS:
+                raise KeyError(f"Filter '{key}' is not allowed")
+            appwrite_field = ALLOWED_FILTERS[key]
+            queries.append(Query.equal(appwrite_field, val))
 
-    results = database.list_documents(
-        database_id=DB_ID,
-        collection_id=QUOTES_COL,
-        queries=queries
-    )
-    print("RESULT", results)
+        results = database.list_documents(
+            database_id=DB_ID,
+            collection_id=QUOTES_COL,
+            queries=queries
+        )
 
-    return results['documents']
+        return results['documents']
+    except Exception as e:
+        raise e
 
 
 
@@ -56,7 +58,7 @@ def fetchAll(user_id: str):
         )
         return quotes
     except Exception as e:
-        return e
+        raise e
     
 
 #Just in case.
@@ -69,7 +71,7 @@ def get_quote(quote_id):
         )
         return res
     except Exception as e:
-        return e
+        raise e
 
 
 def update_quote(quote_id: str, data: dict):
@@ -83,7 +85,7 @@ def update_quote(quote_id: str, data: dict):
         return res
     
     except Exception as e:
-        return e
+        raise e
 
 
 def delete_quote(quote_id: str):
@@ -96,5 +98,5 @@ def delete_quote(quote_id: str):
         return True
     
     except Exception as e:
-        return e
+        raise e
     

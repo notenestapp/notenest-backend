@@ -7,16 +7,19 @@ NOTE_COL = COLLECTIONS['notes']
 DB_ID = os.getenv("APPWRITE_DATABASE_ID")
 
 def create_note(data: dict):
-    # if not data.get("users"):
-    #     raise ApiError("User id required", 400)
-    
-    new_doc = database.create_document(
-        database_id=DB_ID,
-        collection_id=NOTE_COL,
-        document_id=ID.unique(),
-        data=data
-    )
-    return new_doc
+    try:
+        print(data)
+        url = getNoteThumbnail(data.get("name"))
+        data["image"] = url
+        new_doc = database.create_document(
+            database_id=DB_ID,
+            collection_id=NOTE_COL,
+            document_id=ID.unique(),
+            data=data
+        )
+        return new_doc
+    except Exception as e:
+        raise e
 
 
 def fetchAll(user_id: str):
@@ -28,7 +31,7 @@ def fetchAll(user_id: str):
         )
         return notes
     except Exception as e:
-        return e
+        raise e
     
 
 
@@ -41,7 +44,7 @@ def get_note(note_id):
         )
         return res
     except Exception as e:
-        return e
+        raise e
 
 
 def update_note(note_id: str, data: dict):
@@ -55,7 +58,7 @@ def update_note(note_id: str, data: dict):
         return res
     
     except Exception as e:
-        return e
+        raise e
 
 def delete_note(note_id: str):
     try:
@@ -67,5 +70,34 @@ def delete_note(note_id: str):
         return True
     
     except Exception as e:
-        return e
+        raise e
     
+
+def getNoteThumbnail(title: str):
+    try:
+        print(title)
+        response = database.list_documents(
+            database_id=DB_ID,
+            collection_id="course_thumbnails",
+            queries=[Query.contains("name", title)]
+        )
+        # print("Number 1: ", response)
+        if response['total'] == 0 :
+            response = database.list_documents(
+                database_id=DB_ID,
+                collection_id="course_thumbnails",
+                queries=[Query.search("description", title)]
+            )
+            print("Number 2: ", response)
+
+            if response["total"] == 0:
+                response = database.list_documents(
+                    database_id=DB_ID,
+                    collection_id="course_thumbnails",
+                    queries=[Query.contains("name", "else")]
+                )
+
+        print("Response: ", response["documents"][0]["url"])
+        return response["documents"][0]["url"]
+    except Exception as e:
+        print(e)

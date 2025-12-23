@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Payment Failed</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <style>
+            body {
+                font-family: 'Segoe UI', Tahoma, sans-serif;
+                margin: 0;
+                padding: 0;
+                background: #f8d7da;
+                color: #721c24;
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                min-height: 100vh;
+            }
+
+            .container {
+                width: 100%;
+                padding: 40px 20px;
+                text-align: center;
+            }
+
+            .icon-circle {
+                width: 90px;
+                height: 90px;
+                background-color: #721c24;
+                border-radius: 50%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                margin: 40px auto 25px auto;
+                color: white;
+                font-size: 48px;
+                font-weight: bold;
+            }
+
+            h1 {
+                font-size: 1.9rem;
+                margin: 10px 0 10px 0;
+                font-weight: 600;
+            }
+
+            p {
+                font-size: 1rem;
+                color: #721c24;
+                opacity: 0.85;
+                margin-bottom: 35px;
+                padding: 0 10px;
+                line-height: 1.5;
+            }
+
+            button {
+                width: 100%;
+                padding: 15px;
+                font-size: 1.05rem;
+                border: none;
+                border-radius: 10px;
+                color: white;
+                background-color: #721c24;
+                box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+                transition: opacity 0.3s;
+            }
+
+            button:active {
+                opacity: 0.85;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="icon-circle">×</div>
+            <h1>Payment Failed</h1>
+            <p>Your transaction could not be completed. Please try again.</p>
+            <button onclick="window.close()">Try Again</button>
+        </div>
+    </body>
+    </html>

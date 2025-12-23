@@ -1,14 +1,13 @@
 from flask import Blueprint, request, jsonify
-from services.chapters_service import create_chapter, get_chapter, query_chapters, update_chapter, delete_chapter, fetchAll
-
-bp = Blueprint("chapters", __name__, url_prefix="/chapters")
+from services.chapters_service import create_chapter, get_chapter, query_chapters, update_chapter, delete_chapter, fetchAll, generate_chapter
+from utils.limiter import limiter
+bp = Blueprint("chapters", __name__, url_prefix="/api/chapters")
 
 
 
 @bp.get("/")
 def get_chapters():
     filters = request.args.to_dict()
-    print("FILTERS: ", filters)
     data = query_chapters(filters)
     return {"data": data}, 200
 
@@ -16,6 +15,7 @@ def get_chapters():
 
 
 @bp.post("/create")
+@limiter.limit("10 per minute")
 def create():
     body = request.get_json()
 
@@ -28,7 +28,28 @@ def create():
     return jsonify({"data": note}), 201
 
 
+
+@bp.post("/generate")
+@limiter.limit("5 per minute")
+def generate():
+    print("Form data:", request.form)
+    print("Files:", request.files)
+
+    note_id = request.form.get("note_id")
+    if not note_id:
+        return jsonify({"error": "note_id missing"}), 400
+
+    files_obj = request.files.getlist("files")
+    if not files_obj:
+        return jsonify({"error": "No files uploaded"}), 400
+
+    response = generate_chapter(note_id, files_obj)
+    return jsonify({"data": response})
+
+
+
 @bp.get("/user/<user_id>")
+@limiter.limit("10 per minute")
 def fetchAl(user_id):
     chapters = fetchAll(user_id)
     if not chapters: 
@@ -37,7 +58,9 @@ def fetchAl(user_id):
 
 
 @bp.get("/<chapter_id>")
+@limiter.limit("10 per minute")
 def fetch(chapter_id):
+    print("Getting Chapter")
     chapter = get_chapter(chapter_id)
     if not chapter:
         return jsonify({"error": "Not Found"}), 404
@@ -45,6 +68,7 @@ def fetch(chapter_id):
 
 
 @bp.put("/<chapter_id>")
+@limiter.limit("10 per minute")
 def update(chapter_id):
     body = request.get_json()
 
@@ -53,6 +77,7 @@ def update(chapter_id):
 
 
 @bp.delete("/<chapter_id>")
+@limiter.limit("10 per minute")
 def delete(chapter_id):
     delete_chapter(chapter_id)
     return jsonify({"success": True}), 204

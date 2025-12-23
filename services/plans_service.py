@@ -18,7 +18,34 @@ def fetchAll():
         return plans
     except Exception as e:
         print("fetchAll error:", e)
+        raise e
+
+   
     
+ALLOWED_FILTERS = {
+    "type": "type",
+}
+
+def query_plans(filters):
+    try: 
+        queries = []
+        print("Hello")
+
+        for key, val in filters.items():
+            if key not in ALLOWED_FILTERS:
+                raise KeyError(f"Filter '{key}' is not allowed")
+            appwrite_field = ALLOWED_FILTERS[key]
+            queries.append(Query.equal(appwrite_field, val))
+
+        results = database.list_documents(
+            database_id=DB_ID,
+            collection_id=PLAN_COL,
+            queries=queries
+        )
+        print("Documents", results)
+        return results
+    except Exception as e:
+        raise e
 
 
 def get_plan(plan_id):
@@ -30,7 +57,7 @@ def get_plan(plan_id):
         )
         return res
     except Exception as e:
-        return e
+        raise e
 
 
     

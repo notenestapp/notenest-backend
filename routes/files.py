@@ -1,9 +1,11 @@
 from flask import Blueprint, request, jsonify
 from services.files_service import upload_file, delete_file, get_file_url
+from utils.limiter import limiter
 
-bp = Blueprint("files", __name__, url_prefix="/files")
+bp = Blueprint("files", __name__, url_prefix="/api/files")
 
 @bp.post("/upload")
+@limiter.limit("10 per minute")
 def upload():
     if "file" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
@@ -18,6 +20,7 @@ def upload():
     })
 
 @bp.delete("/<file_id>")
+@limiter.limit("10 per minute")
 def remove(file_id):
     delete_file(file_id)
     return jsonify({"status": "deleted"})

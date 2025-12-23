@@ -7,28 +7,31 @@ SUBSCRIPTION_COL = COLLECTIONS['subscription']
 DB_ID = os.getenv("APPWRITE_DATABASE_ID")
 
 def create_subscription(data: dict):
-    # if not data.get("users"):
-    #     raise ApiError("User id required", 400)
     
-    new_doc = database.create_document(
-        database_id=DB_ID,
-        collection_id=SUBSCRIPTION_COL,
-        document_id=ID.unique(),
-        data=data
-    )
-    return new_doc
+    try:
+        new_doc = database.create_document(
+            database_id=DB_ID,
+            collection_id=SUBSCRIPTION_COL,
+            document_id=ID.unique(),
+            data=data
+        )
+        return new_doc
+    except Exception as e:
+        raise e
 
 
-def fetchAll(user_id: str):
+def fetchUserSubs(user_id: str):
     try:
         subscriptions = database.list_documents(
             database_id=DB_ID,
             collection_id=SUBSCRIPTION_COL,
             queries=[Query.equal("users", user_id)]
         )
-        return subscriptions
+        print("Subs", subscriptions)
+        return subscriptions['documents']
     except Exception as e:
-        return e
+        print(e)
+        raise e
     
 
 
@@ -41,7 +44,7 @@ def get_subscription(subscription_id):
         )
         return res
     except Exception as e:
-        return e
+        raise e
 
 
 def update_subscription(subscription_id: str, data: dict):
@@ -55,7 +58,7 @@ def update_subscription(subscription_id: str, data: dict):
         return res
     
     except Exception as e:
-        return e
+        raise e
 
 def delete_subscription(subscription_id: str):
     try:
@@ -67,5 +70,5 @@ def delete_subscription(subscription_id: str):
         return True
     
     except Exception as e:
-        return e
+        raise e
     
