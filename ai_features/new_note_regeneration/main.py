@@ -222,7 +222,7 @@ def main(notes):
        
         #QUERYING GOOGLE CSE
         CSE_url = "https://www.googleapis.com/customsearch/v1"
-        google_search_api_key = "AIzaSyD42uygkZbP1epbWKj9p--yvKCDTJt-FrM"
+        google_search_api_key = os.getenv("GOOGLE_API_KEY")
         search_engine_id = ["d3098cdee83bc4200", "d19967565d73e4696"]#One id is for google search and the other is for YouTube search
         google_links = [] #The list of links gotten from google CSE
         
