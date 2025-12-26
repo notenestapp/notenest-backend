@@ -245,5 +245,5 @@ Remember, understanding Miller indices is crucial for describing the orientation
 
 """
 
-result = parse_to_sections(input)
-print("Result: ", result)
+# result = parse_to_sections(input)
+# print("Result: ", result)

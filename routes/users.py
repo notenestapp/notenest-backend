@@ -15,7 +15,7 @@ def create():
     #     return jsonify({"error": str(e)}), 400
     
     note = create_user(body['data'])
-    return jsonify(note), 201
+    return jsonify({"data": note}), 201
 
 
 
