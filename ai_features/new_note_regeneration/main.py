@@ -374,7 +374,7 @@ def main(notes):
 # if __name__ == "__main__":
 #     notes = ["test_image2.jpg"]
 #     main(notes)
-    
+
 
 # if __name__ == "__main__":
 #     notes = ["test_image2.jpg"]

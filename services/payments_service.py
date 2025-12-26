@@ -35,7 +35,7 @@ def fetchAll(user_id: str):
         payments = database.list_documents(
             database_id=DB_ID,
             collection_id=PAYMENTS_COL,
-            queries=[Query.equal("users", user_id), Query.limit(limit=8)]
+            queries=[Query.equal("users", user_id), Query.limit(limit=8), Query.order_desc("$createdAt")]
         )
         print("Payments: ", payments)
         return payments['documents']
@@ -165,7 +165,7 @@ def init_payment(data: dict):
         
 
         params = {"transactionId": transaction['$id'], "paymentType": payment_type, 'payment_title': payment_title, "lasting": lasting, "user_id": user['$id'], 'credits': credits, "user_credits": user['credits']}
-        callback_url = f"https://94e968d6fc1c.ngrok-free.app/payments/callback?{urllib.parse.urlencode(params)}"
+        callback_url = f"http://54.198.69.197/api/payments/callback?{urllib.parse.urlencode(params)}"
 
 
         payload = { 
@@ -178,12 +178,12 @@ def init_payment(data: dict):
 
 
         headers = {
-            "Authorization" : f"Bearer {os.getenv("PAYSTACK_SECRET_KEY")}",
+            "Authorization" : f"Bearer {os.getenv('PAYSTACK_SECRET_KEY')}",
             "Content-Type" : "application/json",
         }
 
         response = requests.post(
-            f"{os.getenv("PAYSTACK_BASE_URL")}/transaction/initialize",
+            f"{os.getenv('PAYSTACK_BASE_URL')}/transaction/initialize",
             json=payload,
             headers=headers
         )
@@ -242,7 +242,7 @@ def payment_callback(data: dict):
 
         # Verify transaction with Paystack
         headers = {"Authorization": f"Bearer {os.getenv("PAYSTACK_SECRET_KEY")}" }
-        res = requests.get(f"{os.getenv("PAYSTACK_BASE_URL")}/transaction/verify/{reference}", headers=headers)
+        res = requests.get(f"{os.getenv('PAYSTACK_BASE_URL')}/transaction/verify/{reference}", headers=headers)
         result = res.json()
 
         if result["data"]["status"] == "success":

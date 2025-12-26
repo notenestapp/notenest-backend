@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoteNest — Health</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background:#f7fafc; color:#111827; margin:0; }
+        .container { max-width:960px; margin:40px auto; background:white; padding:24px; border-radius:8px; box-shadow:0 4px 18px rgba(15,23,42,0.06); }
+        h1 { margin:0 0 12px 0; }
+        .grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-top:18px; }
+        .card { background:#f8fafc; padding:14px; border-radius:8px; }
+        .k { font-weight:700; color:#0f172a; }
+        .v { margin-top:8px; font-size:1.05rem; }
+        .small { color:#6b7280; font-size:0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Service Health</h1>
+        <p class="small">Service metrics and basic runtime statistics for diagnostics.</p>
+
+        <div class="grid">
+            <div class="card">
+                <div class="k">Uptime</div>
+                <div class="v">{{ uptime }} seconds</div>
+            </div>
+
+            <div class="card">
+                <div class="k">Registered Routes</div>
+                <div class="v">{{ route_count }}</div>
+            </div>
+
+            <div class="card">
+                <div class="k">Total Requests</div>
+                <div class="v">{{ requests }}</div>
+            </div>
+
+            <div class="card">
+                <div class="k">Bytes Received</div>
+                <div class="v">{{ bytes_in }} bytes</div>
+            </div>
+
+            <div class="card">
+                <div class="k">Bytes Sent</div>
+                <div class="v">{{ bytes_out }} bytes</div>
+            </div>
+
+            <div class="card">
+                <div class="k">Network (system) Sent</div>
+                <div class="v">{{ net_sent }} bytes</div>
+            </div>
+
+            <div class="card">
+                <div class="k">Network (system) Received</div>
+                <div class="v">{{ net_recv }} bytes</div>
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

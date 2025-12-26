@@ -60,9 +60,8 @@ def fetch(user_id):
 def update(user_id):
     body = request.get_json()
     data = body['data']
-    dataa = data['data']
 
-    user = update_user(user_id, dataa)
+    user = update_user(user_id, data)
     return jsonify({"data": user})
 
 

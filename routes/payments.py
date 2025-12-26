@@ -33,7 +33,7 @@ def get_payments():
 def initialize_payment():
     try:
         data = request.get_json()
-
+        print("Data from frontend: ", data)
         response = init_payment(data)
         print("Response from the payment init", response)
         return {"data": response}, 200

@@ -1,4 +1,7 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, request, g
+import time
+import threading
+import psutil
 from flask_cors import CORS
 
 from routes.notes import bp as note_bp
@@ -14,6 +17,7 @@ from routes.exam_score import bp as exam_bp
 from routes.video_watch import bp as video_bp
 from routes.read_time import bp as read_bp
 from routes.push import bp as push_bp
+from routes.credit_history import bp as credits_bp
 
 from utils.error import register_error_handlers
 from utils.limiter import limiter
@@ -45,11 +49,76 @@ app.register_blueprint(video_bp)
 app.register_blueprint(exam_bp)
 app.register_blueprint(read_bp)
 app.register_blueprint(push_bp)
+app.register_blueprint(credits_bp)
+
+
+# --- Metrics tracking -------------------------------------------------
+# Record app start time and initial network counters
+APP_START = time.time()
+NET_INITIAL = psutil.net_io_counters()
+
+# Thread-safe counters for request-level stats
+_metrics_lock = threading.Lock()
+_metrics = {"count": 0, "bytes_in": 0, "bytes_out": 0}
+
+
+@app.before_request
+def _track_before_request():
+    # track incoming request size (may be None)
+    size = request.content_length or 0
+    g._req_size = size
+    with _metrics_lock:
+        _metrics["count"] += 1
+        _metrics["bytes_in"] += size
+
+
+@app.after_request
+def _track_after_request(response):
+    # track response size
+    try:
+        length = response.content_length
+        if length is None:
+            data = response.get_data()
+            length = len(data) if data else 0
+    except Exception:
+        length = 0
+    with _metrics_lock:
+        _metrics["bytes_out"] += length
+    return response
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    # uptime in seconds
+    uptime = int(time.time() - APP_START)
+
+    # routes count
+    route_count = sum(1 for _ in app.url_map.iter_rules())
+
+    # system network usage since app start (approximate)
+    try:
+        net_now = psutil.net_io_counters()
+        net_sent = max(0, net_now.bytes_sent - NET_INITIAL.bytes_sent)
+        net_recv = max(0, net_now.bytes_recv - NET_INITIAL.bytes_recv)
+    except Exception:
+        net_sent = net_recv = 0
+
+    with _metrics_lock:
+        req_count = _metrics["count"]
+        bytes_in = _metrics["bytes_in"]
+        bytes_out = _metrics["bytes_out"]
+
+    # Render a simple status page with metrics
+    return render_template(
+        "health.html",
+        uptime=uptime,
+        route_count=route_count,
+        requests=req_count,
+        bytes_in=bytes_in,
+        bytes_out=bytes_out,
+        net_sent=net_sent,
+        net_recv=net_recv,
+    )
 
 
 @app.get("/")
