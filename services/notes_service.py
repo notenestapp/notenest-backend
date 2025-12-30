@@ -88,7 +88,6 @@ def getNoteThumbnail(title: str):
                 collection_id="course_thumbnails",
                 queries=[Query.search("description", title)]
             )
-            print("Number 2: ", response)
 
             if response["total"] == 0:
                 response = database.list_documents(
@@ -97,7 +96,6 @@ def getNoteThumbnail(title: str):
                     queries=[Query.contains("name", "else")]
                 )
 
-        print("Response: ", response["documents"][0]["url"])
         return response["documents"][0]["url"]
     except Exception as e:
         print(e)
