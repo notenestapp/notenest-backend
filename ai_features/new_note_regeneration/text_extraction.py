@@ -5,15 +5,30 @@ import fitz
 from docx.api import Document
 import os
 
+_ocr_instance = None
+
+def get_ocr():
+    global _ocr_instance
+    if _ocr_instance is None:
+        from paddleocr import PaddleOCR # lazy import
+        _ocr_instance = PaddleOCR(
+            lang='en',
+            use_angle_cls=False, # TURN THIS OFF
+            )
+    return _ocr_instance
+#The OCR
+
 
 #The OCR
-def ocr(notes):
+def run_ocr(image_path):
     # Initialize variables with default values
+    ocr = get_ocr()
+    result = ocr.predict(image_path)
     idx = 0
     combined = ""
-    ocr = PaddleOCR(lang='en', use_angle_cls=True, det_model_dir=None, rec_model_dir=None)
+    #ocr = PaddleOCR(lang='en', use_angle_cls=True, det_model_dir=None, rec_model_dir=None)
 
-    result = ocr.predict(notes)#The OCR is processing the images
+    #result = ocr.predict(notes)#The OCR is processing the images
     
     for idx, res in enumerate(result):#The OCR returns json output so we are checking for the rec_texts key which is where the output of the OCR is.
         texts = res["rec_texts"]

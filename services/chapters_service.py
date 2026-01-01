@@ -4,6 +4,8 @@ from appwrite.query import Query
 from typing import TypeVar, List
 import os
 from ai_features.new_note_regeneration.main import main
+from services.push_service import send_push_notification
+from services.user_service import get_user
 from utils.text_standardizer import parse_to_sections
 from utils.file_storage import get_file
 import json
@@ -19,14 +21,18 @@ def create_chapter(data: dict):
     # if not data.get("users"):
     #     raise ApiError("User id required", 400)
     
-    new_doc = database.create_document(
-        database_id=DB_ID,
-        collection_id=CHAPTER_COL,
-        document_id=ID.unique(),
-        data=data
-    )
+    try:
+        new_doc = database.create_document(
+            database_id=DB_ID,
+            collection_id=CHAPTER_COL,
+            document_id=ID.unique(),
+            data=data
+        )
 
-    return new_doc
+        return new_doc
+    except Exception as e:
+        print("Error from creating Chapter: ", e)
+        raise e
 
 def cut_text(text: str, length: int = 100) -> str:
     # THis function gets the description of the chapter by cutting the regenerated note and returning the first 100 chars
@@ -39,7 +45,7 @@ def cut_text(text: str, length: int = 100) -> str:
     return text[:length]
 
 
-def generate_chapter(note_id, fileObj: List[T]):
+def generate_chapter(note_id, user_id, fileObj: List[T]):
     try:
         urls = []
 
@@ -55,7 +61,6 @@ def generate_chapter(note_id, fileObj: List[T]):
         # Generate new note from ai
 
         chapter = main(urls)
-        print("PRekmoeme: ", chapter)
         standard_text = parse_to_sections(chapter)
         
         # # FIX: Use json.dumps() to get a string, NOT jsonify()
@@ -70,11 +75,19 @@ def generate_chapter(note_id, fileObj: List[T]):
             "file": "nothing"
         })
 
-        # Return response to route function
-        print("Response: ", response)
+        #Push Notification
+        user = get_user(user_id=user_id)
+
+        send_push_notification(
+            user_id=user_id, 
+            title=f"Hey, {user['username']}",
+            body="Your Note Is Ready"
+            )
+
         return response
 
     except Exception as e:
+        print("Error regenerating note: ", e)
         raise e
 
 

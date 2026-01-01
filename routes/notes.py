@@ -49,5 +49,6 @@ def update(note_id):
 @bp.delete("/<note_id>")
 @limiter.limit("10 per minute")
 def delete(note_id):
-    delete_note(note_id)
-    return jsonify({"success": True}), 204
+    response = delete_note(note_id)
+    print("Response: ", )
+    return jsonify({"success": response}), 204
