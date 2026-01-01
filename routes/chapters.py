@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from services.chapters_service import create_chapter, get_chapter, query_chapters, update_chapter, delete_chapter, fetchAll, generate_chapter
 from utils.limiter import limiter
 bp = Blueprint("chapters", __name__, url_prefix="/api/chapters")
@@ -29,23 +29,41 @@ def create():
 
 
 
+from werkzeug.exceptions import ClientDisconnected
+
 @bp.post("/generate")
 @limiter.limit("5 per minute")
 def generate():
-    print("Form data:", request.form)
-    print("Files:", request.files)
+    try:
+        current_app.logger.info("Generate endpoint called")
 
-    note_id = request.form.get("note_id")
-    if not note_id:
-        return jsonify({"error": "note_id missing"}), 400
+        if not request.content_type or not request.content_type.startswith("multipart/form-data"):
+            return jsonify({"error": "Invalid content type"}), 400
 
-    files_obj = request.files.getlist("files")
-    if not files_obj:
-        return jsonify({"error": "No files uploaded"}), 400
+        note_id = request.form.get("note_id")
+        user_id = request.form.get("user_id")
+        if not note_id:
+            return jsonify({"error": "note_id missing"}), 400
 
-    response = generate_chapter(note_id, files_obj)
-    return jsonify({"data": response})
+        files_obj = request.files.getlist("files")
+        if not files_obj:
+            return jsonify({"error": "No files uploaded"}), 400
 
+        current_app.logger.info(
+            "Files received: %s",
+            [f.filename for f in files_obj]
+        )
+
+        response = generate_chapter(note_id, user_id, files_obj)
+        return jsonify({"data": response})
+
+    except ClientDisconnected:
+        current_app.logger.warning("Client disconnected during upload")
+        return jsonify({"error": "Upload interrupted"}), 400
+
+    except Exception as e:
+        current_app.logger.exception("Unhandled exception in generate endpoint")
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @bp.get("/user/<user_id>")

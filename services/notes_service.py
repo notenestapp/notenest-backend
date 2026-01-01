@@ -62,6 +62,7 @@ def update_note(note_id: str, data: dict):
 
 def delete_note(note_id: str):
     try:
+        print("Deleting : ", note_id)
         database.delete_document(
             database_id=DB_ID,
             collection_id=NOTE_COL,

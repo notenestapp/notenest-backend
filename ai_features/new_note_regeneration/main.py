@@ -6,7 +6,7 @@ from ai_features.new_note_regeneration.chroma_database import chroma_db
 from ai_features.new_note_regeneration.text_chunking import chunk_text_by_tokens
 from ai_features.new_note_regeneration.prompts import note_cleanup_user_prompt, classification_user_prompt, search_queries_system_prompt, generate_example_question, generate_explanation_question, generate_general_questions, regeneration_user_prompt, regeneration_system_prompt, merge_regeneration_user_prompt
 from ai_features.new_note_regeneration import prompts
-from ai_features.new_note_regeneration.text_extraction import ocr, extract_pdf, extract_docx
+from ai_features.new_note_regeneration.text_extraction import run_ocr, extract_pdf, extract_docx
 from ai_features.new_note_regeneration.LLM import llama_3_1_8b_instant, qwen_qwen3_32b, llama_3_3_70b_versatile2
 from ai_features.new_note_regeneration.cache_and_reuse import find_cached_expansion, save_expansion
 from ai_features.new_note_regeneration.search_and_scrape import build_payload, make_requests, scraped_content, clean_scraped_text
@@ -34,7 +34,7 @@ def main(notes):
             else:#Anything else the OCR will handle it.
                 #OCR extraction
                 print("\nRunning OCR")
-                text = ocr(note)[1]
+                text = run_ocr(note)[1]
                 ocr_text = True
         
     except Exception as e:
