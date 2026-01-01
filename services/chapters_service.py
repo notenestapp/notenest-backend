@@ -6,6 +6,7 @@ import os
 from ai_features.new_note_regeneration.main import main
 from services.push_service import send_push_notification
 from services.user_service import get_user
+from services.notes_service import get_note
 from utils.text_standardizer import parse_to_sections, extract_dynamic_title
 from utils.file_storage import get_file
 import json
@@ -63,18 +64,24 @@ def generate_chapter(note_id, user_id, fileObj: List[T]):
         chapter = main(urls)
         print("Chapters: ", chapter)
         standard_text = parse_to_sections(chapter)
-        title = extract_dynamic_title(chapter)
+        # title = extract_dynamic_title(chapter)
         
         # # FIX: Use json.dumps() to get a string, NOT jsonify()
         content_to_upload = json.dumps(standard_text) 
 
+        #Fetching the noteData
+
+        note_data = get_note(note_id=note_id)
+        number = (note_data.get('last_num') or 0) + 1
+
+
         # # Upload Note to appwrite and get the response body
         response = create_chapter({
             "noteId": note_id,
-            "title": title,
+            "title": f"{number}.",
             "content": content_to_upload,
             "description": cut_text(chapter),
-            "file": "nothing"
+            "file": None
         })
         print("Response: ", response)
 
