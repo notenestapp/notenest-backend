@@ -2,7 +2,6 @@ from groq import Groq
 import os
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-print("Key: ", GROQ_API_KEY)
 
 #The llm for classification
 def qwen_qwen3_32b(system_prompt, user_prompt):

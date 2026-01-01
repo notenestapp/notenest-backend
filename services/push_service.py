@@ -16,11 +16,11 @@ def create_token(user_id, token, platform, is_active):
     try: 
         user = get_user(user_id=user_id)
 
-        send_push_notification(
-            user_id=user_id, 
-            title=f"Welcome, {user['username']}",
-            body="I hope you have a good time using NoteNest today"
-            )
+        # send_push_notification(
+        #     user_id=user_id, 
+        #     title=f"Welcome, {user['username']}",
+        #     body="I hope you have a good time using NoteNest today"
+        #     )
         
         #Check if document exists
         existing_document = database.list_documents(

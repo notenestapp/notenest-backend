@@ -6,7 +6,7 @@ import os
 from ai_features.new_note_regeneration.main import main
 from services.push_service import send_push_notification
 from services.user_service import get_user
-from utils.text_standardizer import parse_to_sections
+from utils.text_standardizer import parse_to_sections, extract_dynamic_title
 from utils.file_storage import get_file
 import json
 
@@ -34,7 +34,7 @@ def create_chapter(data: dict):
         print("Error from creating Chapter: ", e)
         raise e
 
-def cut_text(text: str, length: int = 100) -> str:
+def cut_text(text: str, length: int = 70) -> str:
     # THis function gets the description of the chapter by cutting the regenerated note and returning the first 100 chars
     if not isinstance(text, str):
         raise TypeError("text must be a string")
@@ -61,7 +61,9 @@ def generate_chapter(note_id, user_id, fileObj: List[T]):
         # Generate new note from ai
 
         chapter = main(urls)
+        print("Chapters: ", chapter)
         standard_text = parse_to_sections(chapter)
+        title = extract_dynamic_title(chapter)
         
         # # FIX: Use json.dumps() to get a string, NOT jsonify()
         content_to_upload = json.dumps(standard_text) 
@@ -69,11 +71,12 @@ def generate_chapter(note_id, user_id, fileObj: List[T]):
         # # Upload Note to appwrite and get the response body
         response = create_chapter({
             "noteId": note_id,
-            "title": 'Biscuit',
+            "title": title,
             "content": content_to_upload,
             "description": cut_text(chapter),
             "file": "nothing"
         })
+        print("Response: ", response)
 
         #Push Notification
         user = get_user(user_id=user_id)

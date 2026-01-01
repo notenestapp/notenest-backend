@@ -1,7 +1,6 @@
 def parse_to_sections(text: str):
     import re
 
-    sections = []
     current_section = {"title": None, "content": []}
     lines = text.split("\n")
     buffer = []
@@ -11,9 +10,7 @@ def parse_to_sections(text: str):
     )
     LINK_REGEX = re.compile(r"(https?://[^\s]+)")
 
-    INLINE_PATTERN = re.compile(
-        r"(\*\*(.*?)\*\*|\*(.*?)\*|\$(.+?)\$)"
-    )
+    INLINE_PATTERN = re.compile(r"(\*\*(.*?)\*\*|\*(.*?)\*|\$(.+?)\$)")
 
     def flush_buffer():
         if not buffer:
@@ -23,9 +20,7 @@ def parse_to_sections(text: str):
         if not paragraph:
             return
 
-        # Pure link line
         yt_match = YOUTUBE_REGEX.search(paragraph)
-
         if yt_match:
             current_section["content"].append({
                 "type": "youtube",
@@ -41,96 +36,40 @@ def parse_to_sections(text: str):
     def parse_basic_inline(text):
         fragments = []
         last = 0
-
         for m in INLINE_PATTERN.finditer(text):
             start, end = m.span()
             if start > last:
                 fragments.append({"type": "text", "value": text[last:start]})
-
             if m.group(2):
                 fragments.append({"type": "bold", "value": m.group(2)})
             elif m.group(3):
                 fragments.append({"type": "italic", "value": m.group(3)})
             elif m.group(4):
                 fragments.append({"type": "math_inline", "value": m.group(4)})
-
             last = end
-
         if last < len(text):
             fragments.append({"type": "text", "value": text[last:]})
-
         return fragments
-
 
     def parse_inline_formats(text):
         fragments = []
         pos = 0
-
         for m in LINK_REGEX.finditer(text):
             start, end = m.span()
-
             if start > pos:
                 fragments.extend(parse_basic_inline(text[pos:start]))
-
-            fragments.append({
-                "type": "link",
-                "value": m.group(1)
-            })
-
+            fragments.append({"type": "link", "value": m.group(1)})
             pos = end
-
         if pos < len(text):
             fragments.extend(parse_basic_inline(text[pos:]))
-
         return fragments
-
-    def is_title_line(idx):
-        line = lines[idx].strip()
-
-        if not line:
-            return False
-
-        # Reject lists and bullets
-        if re.match(r"^(\d+\.\s+|-+\s+)", line):
-            return False
-
-        # Reject sentences (ends with punctuation)
-        if re.search(r"[.!?]$", line):
-            return False
-
-        # Reject very long lines (likely paragraphs)
-        if len(line) > 80:
-            return False
-
-        # Must be surrounded by blank lines (Markdown-style)
-        if idx > 0 and lines[idx - 1].strip() != "":
-            return False
-        if idx < len(lines) - 1 and lines[idx + 1].strip() != "":
-            return False
-
-        # Reject obvious paragraph starters
-        if re.match(r"^(To|This|Suppose|Given|Remember|You can)\b", line):
-            return False
-
-        return True
-
 
     i = 0
     while i < len(lines):
         line = lines[i].rstrip()
 
-        # Section title (plain text)
-        if is_title_line(i):
-            flush_buffer()
-            if current_section["title"] or current_section["content"]:
-                sections.append(current_section)
-            current_section = {
-                "title": line.strip(),
-                "content": []
-            }
-
         # Numbered list
-        elif re.match(r"^\d+\.\s+", line):
+        if re.match(r"^\d+\.\s+", line):
             flush_buffer()
             item = re.sub(r"^\d+\.\s+", "", line)
             current_section["content"].append({
@@ -176,14 +115,41 @@ def parse_to_sections(text: str):
         i += 1
 
     flush_buffer()
-    if current_section["title"] or current_section["content"]:
-        sections.append(current_section)
-
-    return sections
+    return [current_section]  # Return as a single-item list
 
 
+import re
 
-input = r"""Finding a Plane Through Given Points
+def extract_dynamic_title(text: str) -> str:
+    """
+    Extracts the first meaningful line as a title, stripping common Markdown
+    formatting such as headings (#, ##, ###) and bold (**...**).
+    """
+    lines = text.split("\n")
+    
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue  # skip empty lines
+
+        # Remove Markdown headings (#, ##, ###) and surrounding whitespace
+        stripped = re.sub(r"^#{1,6}\s*", "", stripped)
+
+        # Remove bold markers **...** or __...__
+        stripped = re.sub(r"^\*\*(.*?)\*\*$", r"\1", stripped)
+        stripped = re.sub(r"^__(.*?)__$", r"\1", stripped)
+
+        # Remove leading/trailing whitespace again
+        stripped = stripped.strip()
+
+        if stripped:
+            return stripped
+    
+    return ""
+
+
+
+input = r"""**Finding a Plane Through Given Points**
 
 To find a plane that passes through a set of given points, you need to determine the equation of the plane. The general equation of a plane in 3D space is given by **ax + by + cz + d = 0**, where **a**, **b**, **c**, and **d** are constants.
 
@@ -245,5 +211,5 @@ Remember, understanding Miller indices is crucial for describing the orientation
 
 """
 
-# result = parse_to_sections(input)
-# print("Result: ", result)
+result = extract_dynamic_title(input)
+print("Result: ", result)
