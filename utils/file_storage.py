@@ -1,5 +1,9 @@
 import tempfile
 import os
+from PIL import Image
+
+MAX_SIZE = (1280, 1280)
+
 
 def get_file(file_obj):
     try:
@@ -11,6 +15,13 @@ def get_file(file_obj):
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
             file_obj.save(tmp.name)
             temp_path = tmp.name
+
+        # Image preprocessing
+        if suffix in [".jpg", ".jpeg", ".png", ".webp"]:
+            with Image.open(temp_path) as img:
+                img = img.convert("RGB")
+                img.thumbnail(MAX_SIZE)
+                img.save(temp_path, format="JPEG", quality=85)
 
         return temp_path
     except Exception as e:

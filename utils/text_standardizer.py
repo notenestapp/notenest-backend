@@ -1,4 +1,7 @@
 def parse_to_sections(text: str):
+    if not text:  # handles None or empty string
+        return [{"title": None, "content": []}]
+    
     import re
 
     current_section = {"title": None, "content": []}

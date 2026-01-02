@@ -6,7 +6,7 @@ import os
 from ai_features.new_note_regeneration.main import main
 from services.push_service import send_push_notification
 from services.user_service import get_user
-from services.notes_service import get_note
+from services.notes_service import get_note, update_note
 from utils.text_standardizer import parse_to_sections, extract_dynamic_title
 from utils.file_storage import get_file
 import json
@@ -62,6 +62,9 @@ def generate_chapter(note_id, user_id, fileObj: List[T]):
         # Generate new note from ai
 
         chapter = main(urls)
+        if not chapter:
+            raise ValueError("Failed to generate chapter content")
+        chapter = chapter or ""
         print("Chapters: ", chapter)
         standard_text = parse_to_sections(chapter)
         # title = extract_dynamic_title(chapter)
@@ -98,6 +101,9 @@ def generate_chapter(note_id, user_id, fileObj: List[T]):
                 "user_id": user_id
             }
             )
+        update_note(note_id=note_id, data={
+            "last_num": number,
+        })
 
         return response
 
