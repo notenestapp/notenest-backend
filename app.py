@@ -93,6 +93,13 @@ def redirect():
         "oauth_redirect.html"
     )
 
+@app.get("/reset-password")
+def password_redirect():
+    #Return the template
+    return render_template(
+        "password_reset_redirect.html"
+    )
+
 
 @app.get("/health")
 def health():
