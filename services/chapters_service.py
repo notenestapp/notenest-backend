@@ -59,53 +59,52 @@ def generate_chapter(note_id, user_id, fileObj: List[T]):
 
         response = None
 
-        # response = get_chapter("6949832c003d6d7674e2")
-
         # Generate new note from ai
 
-        # chapter = main(urls)
-        # if not chapter:
-        #     raise ValueError("Failed to generate chapter content")
-        # chapter = chapter or ""
+        chapter = main(urls)
+        if not chapter:
+            raise ValueError("Failed to generate chapter content")
+        chapter = chapter or ""
         # print("Chapters: ", chapter)
-        # standard_text = parse_to_sections(chapter)
+        standard_text = parse_to_sections(chapter)
         # # title = extract_dynamic_title(chapter)
         
         # # # FIX: Use json.dumps() to get a string, NOT jsonify()
-        # content_to_upload = json.dumps(standard_text) 
+        content_to_upload = json.dumps(standard_text) 
 
         # #Fetching the noteData
 
-        # note_data = get_note(note_id=note_id)
-        # number = (note_data.get('last_num') or 0) + 1
+        note_data = get_note(note_id=note_id)
+        number = (note_data.get('last_num') or 0) + 1
 
 
         # # # Upload Note to appwrite and get the response body
-        # response = create_chapter({
-        #     "noteId": note_id,
-        #     "title": f"{number}.",
-        #     "content": content_to_upload,
-        #     "description": cut_text(chapter),
-        #     "file": None
-        # })
+        response = create_chapter({
+            "noteId": note_id,
+            "title": f"{number}.",
+            "content": content_to_upload,
+            "content_string": chapter,
+            "description": cut_text(chapter),
+            "file": None
+        })
         # print("Response: ", response)
 
         # #Push Notification
-        # user = get_user(user_id=user_id)
+        user = get_user(user_id=user_id)
 
-        # send_push_notification(
-        #     user_id=user_id, 
-        #     title=f"Hey, {user['username']}",
-        #     body="Your Note Is Ready",
-        #     data={
-        #         "type": "chapter",
-        #         "chapter_id": response['$id'],
-        #         "user_id": user_id
-        #     }
-        #     )
-        # update_note(note_id=note_id, data={
-        #     "last_num": number,
-        # })
+        send_push_notification(
+            user_id=user_id, 
+            title=f"Hey, {user['username']}",
+            body="Your Note Is Ready",
+            data={
+                "type": "chapter",
+                "chapter_id": response['$id'],
+                "user_id": user_id
+            }
+            )
+        update_note(note_id=note_id, data={
+            "last_num": number,
+        })
 
         return response
 
