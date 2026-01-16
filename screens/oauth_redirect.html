@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Redirecting…</title>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const userId = params.get("userId");
+      const secret = params.get("secret");
+
+      if (userId && secret) {
+        window.location.href =
+          `notenest://signIn?userId=${userId}&secret=${secret}`;
+      } else {
+        
+        document.body.innerText = "Authentication failed.";
+      }
+    </script>
+  </head>
+  <body></body>
+</html>
