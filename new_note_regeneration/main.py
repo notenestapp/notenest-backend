@@ -3,6 +3,7 @@ import requests
 import time
 import os
 from dotenv import load_dotenv
+import LLM
 
 load_dotenv()
 
@@ -121,10 +122,10 @@ def main(notes):
     #STEP 6: CLASSIFICATION THEN CACHE AND REUSE
     try:
         from cache_and_reuse import find_cached_expansion
-        name = "Knowledge_Expansion_Database"
+        name = "NoteNest_Vector_Database"
 
         from chroma_database import chroma_db
-        knowledge_expansion_collection = chroma_db(name)#The database for knowledge expansion
+        NoteNest_Vector_Database = chroma_db(name)#The database for knowledge expansion
         chunk_number = 0
         regenerated_note = ""
 
@@ -167,7 +168,7 @@ def main(notes):
 
                 #STEP 4: SEPERATING CHUNKS INTO ONE LIST
                 try:
-                    search_system_prompt = search_queries_system_prompt(label)
+                    search_system_prompt = search_queries_system_prompt()
                     
                     if label == "Explanation":          
                         explanation_token_count = explanation_token_count + chunk_token
@@ -228,14 +229,14 @@ def main(notes):
             if len(explanation_search_questions) > 0:
                 print(f"\n-----WE ARE WORKING ON CHUNK NUMBER EXPLANATION CHUNK------\n")
                 for query in explanation_search_questions:    
-                    cached_expansion = find_cached_expansion(query, knowledge_expansion_collection)
+                    cached_expansion = find_cached_expansion(query, NoteNest_Vector_Database)
                     print(f"\n-----This is the response in the database {cached_expansion}-----")
             else:
                 pass
             
             if len(other_search_questions) > 0:         
                 for query in other_search_questions:    
-                    cached_expansion = find_cached_expansion(query, knowledge_expansion_collection)
+                    cached_expansion = find_cached_expansion(query, NoteNest_Vector_Database)
                     print(cached_expansion)
             else:
                 pass
@@ -376,7 +377,7 @@ def main(notes):
                 chunking_text = chunking["chunk_text"]
                 chunking_id = chunking["chunk_id"]
                 
-                save_the_expansion = save_expansion(chunking_text, chunking_id, topic, knowledge_expansion_collection)
+                save_the_expansion = save_expansion(chunking_text, chunking_id, topic, NoteNest_Vector_Database)
                 print(f"-----Id of the chunk{chunking_id}----\n  -----Result from saving the scraped content to the knowledge expansion database {save_the_expansion}------")
         
         except Exception as e:
@@ -390,12 +391,13 @@ def main(notes):
             token = clean_explanation_scraped_content.split()
             trauncate_scrapped_content = " ".join(token[:2000])
             
-            regen_user_prompt = regeneration_user_prompt(all_explanation_chunk, trauncate_scrapped_content)
+            regen_user_prompt = prompts.regeneration_user_prompt(all_explanation_chunk, trauncate_scrapped_content)
 
             regeneration_scrapped_content = enforce_token_budget(regen_system_prompt, regen_user_prompt, draft_input)
             
-            regenerate_explanation_chunk = llama_3_3_70b_versatile2(regeneration_scrapped_content[0], regeneration_scrapped_content[1], draft_output)
-            regenerated_note += "\n".join(regenerate_explanation_chunk)
+            regenerate_explanation_chunk = LLM.gemini(regeneration_scrapped_content[0], regeneration_scrapped_content[1])
+            print(regenerate_explanation_chunk)
+            regenerated_note = "".join(regenerate_explanation_chunk)
         else:
             pass
 
@@ -407,8 +409,8 @@ def main(notes):
             
             regeneration_scrapped_content = enforce_token_budget(regen_system_prompt, regen_user_prompt, draft_input)
             
-            regenerate_other_chunk = llama_3_3_70b_versatile2(regeneration_scrapped_content[0], regeneration_scrapped_content[1], draft_output)
-            regenerated_note += "\n".join(regenerate_other_chunk)
+            regenerate_other_chunk = LLM.gemini(regeneration_scrapped_content[0], regeneration_scrapped_content[1])
+            regenerated_note = "".join(regenerate_other_chunk)
         else:
             pass
 
@@ -417,18 +419,29 @@ def main(notes):
 
     try:
         from prompts import merge_regeneration_user_prompt
+        
         merge_user_prompt = merge_regeneration_user_prompt(regenerated_note, youtube_links)
         merge_system_prompt = prompts.merge_regeneration_system_prompt
+        
 
         merging = enforce_token_budget(merge_system_prompt, merge_user_prompt, final_merge_input)
 
         print(f"This is the merging system prompt, I am checking to find the YouTube lnks to be in the note. {merging[0]}\n and this is the user prompt{merging[1]}")
-        final_note = llama_3_3_70b_versatile2(merging[0], merging[1], final_merge_output)
+        final_note = LLM.gemini(merging[0], merging[1])
 
-        print(f"-----✅This is the final note{final_note}")
+        #print(f"-----✅This is the final note{final_note}")
+
+        token = final_note.split()
+        trauncate_final_note = " ".join(token[:100])
+        #print(f"This is the trauncated note to use and create the topic {trauncate_final_note}")
+        topic = LLM.llama_3_3_70b_versatile2(user_prompt=f"This is a regenerated note {trauncate_final_note}, give me an appropriate title for this note based on the topic/subject in studies that is covered in this. Do not explain anything and just give the answer", system_prompt="", max_token=10)
+
+        #print(topic)
 
     except Exception as e:
         print(f"Failed merging the final note: {e}")
+
+    return final_note, topic
 
 
 if __name__ == "__main__":

@@ -51,10 +51,10 @@ def note_cleanup_user_prompt(text):
     return user_prompt
     
 #The system prompt to generate google search questions
-def search_queries_system_prompt(label):
+def search_queries_system_prompt():
     prompt = f"""
         You are a search query generator for a RAG system. The user is studying a topic. 
-        Based on the text given and its was classified as a/an ({label}), you will
+        Based on the text given, you will
         generate 2 Google search queries that would retrieve the most relevant, 
         high-quality information from trusted sources like:
         - Wikipedia

@@ -1,10 +1,25 @@
 from groq import Groq
 import os
 from dotenv import load_dotenv
+from google import genai
+from google.genai import types
 
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+def gemini(system_prompts, user_prompts):
+    client = genai.Client(api_key=GEMINI_API_KEY)
+
+    response = client.models.generate_content(
+        model = "gemini-3-flash-preview",
+        contents = user_prompts,#"Teach me about Miller Indices. Step by step while solving problems",
+        config=types.GenerateContentConfig(
+            system_instruction=system_prompts#"You are a rude teacher and reply in short outputs."
+        )
+    )
+    return response.text
 
 #The llm for classification
 def qwen_qwen3_32b(system_prompt, user_prompt):

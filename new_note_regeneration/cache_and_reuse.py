@@ -20,11 +20,11 @@ def find_cached_expansion(query, knowledge_expansion_collection):
 
     distances = results["distances"][0][0]
 
-    if distances > 0.45:
+    if distances > 0.55:
         knowledge_expansion = results["documents"][0][0]
         return "None"
     
-    elif distances < 0.45:
+    elif distances < 0.55:
         knowledge_expansion = results["documents"][0][0]
 
     else:
