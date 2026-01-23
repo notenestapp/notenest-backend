@@ -42,19 +42,19 @@ def main(notes):
             from text_extraction import ocr, extract_pdf, extract_docx
             if note.endswith(".pdf"):
                 print("Extracting from pdf")
-                text = extract_pdf(note)
+                text += extract_pdf(note)
                 print("Extracted successfully from the pdf")
 
             elif note.endswith(".docx"):
                 #Docx extraction
                 print("\nExtracting from docx")
-                text = extract_docx(note)
+                text += extract_docx(note)
                 print("Extracted successfully from the docx")
 
             else:#Anything else the OCR will handle it.
                 #OCR extraction
                 print("\nRunning OCR")
-                text = ocr(note)[1]
+                text += ocr(note)[1]
                 ocr_text = True
         
     except Exception as e:
