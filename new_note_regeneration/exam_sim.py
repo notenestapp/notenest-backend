@@ -146,6 +146,29 @@ def exam_simulation(image, content, no_of_questions, type_of_question, model):
                 #user_prompt = f"Study this style of asking questions {text_from_image} and in the same level of diffculty, style and method, create {no_of_questions} of practice questions from a mix of the study questions. These are similar questions gotten from the database:{content} you can repeat these questions if they are relevant and in line with the original or generate new ones based on them and give their answers."
                 #exam_questions = LLM.llama_3_3_70b_versatile2(user_prompt, system_prompt, max_token=500)
 
+            #Content and no image
+            elif not image and content:
+                user_prompt = f"""
+                    Create {no_of_questions} practice questions of type {type_of_question} based on the content of this note: {content}
+
+                    FORMAT RULE (MANDATORY):
+                    Each question must be immediately followed by the options and then its answer.
+                    Even if the input reference was in a different type, create questions in this type {type_of_question}
+                    Do NOT create a separate answers section.
+
+                    FORMAT EXACTLY LIKE THIS:
+
+                    Q1. <question> 
+                    <options>
+                    A1. <answer>
+
+                    Q2. <question>
+                    <options>
+                    A2. <answer>
+
+                    Repeat until complete.
+                """
+
             else:
                 print("No content found in the database")
                 user_prompt = f"""Study this style of asking questions {text_from_image} and in the same level of diffculty,
@@ -167,12 +190,10 @@ def exam_simulation(image, content, no_of_questions, type_of_question, model):
 
                     Repeat until complete.
                     """
-        
-        print(f"This is the content found in the database: {content}")
 
         new_questions = LLM_model(model, user_prompt, system_prompt)
         #new_questions = LLM.gemini(user_prompt, system_prompt)
-        print("A problem")
+
 
         topic = LLM.llama_3_3_70b_versatile2(user_prompt=f"This is a practice question that was generated {new_questions}, give me an appropriate title for the practice questions based on the topic/subject in studies that is covered in this. Do not explain anything and just give the answer", system_prompt="", max_token=10)
 
