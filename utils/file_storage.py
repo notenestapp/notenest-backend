@@ -7,23 +7,21 @@ MAX_SIZE = (1280, 1280)
 
 def get_file(file_obj):
     try:
-        filename = file_obj.filename.lower()
+        filename = (file_obj.filename or "").lower()
+        ext = os.path.splitext(filename)[1]
 
-        # Save to temp file so your existing logic still works
-        suffix = os.path.splitext(filename)[1] or ".tmp"
+        if ext not in [".jpg", ".jpeg", ".png", ".bmp", ".pdf", ".webp"]:
+            ext = ".jpg"  # force a supported extension
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as tmp:
             file_obj.save(tmp.name)
             temp_path = tmp.name
 
-        # Image preprocessing
-        if suffix in [".jpg", ".jpeg", ".png", ".webp"]:
+        if ext in [".jpg", ".jpeg", ".png", ".webp"]:
             with Image.open(temp_path) as img:
-                print("Image Size: ", img.size)
                 img = img.convert("RGB")
                 img.thumbnail(MAX_SIZE)
                 img.save(temp_path, format="JPEG", quality=85)
-                print("IMage size after: ", img.size)
 
         return temp_path
     except Exception as e:

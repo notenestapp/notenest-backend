@@ -61,7 +61,8 @@ def generate_chapter(note_id, user_id, fileObj: List[T]):
 
         # Generate new note from ai
 
-        chapter = main(urls)
+        result = main(urls)
+        chapter, title = result
         if not chapter:
             raise ValueError("Failed to generate chapter content")
         chapter = chapter or ""
@@ -81,7 +82,7 @@ def generate_chapter(note_id, user_id, fileObj: List[T]):
         # # # Upload Note to appwrite and get the response body
         response = create_chapter({
             "noteId": note_id,
-            "title": f"{number}.",
+            "title": title,
             "content": content_to_upload,
             "content_string": chapter,
             "description": cut_text(chapter),
