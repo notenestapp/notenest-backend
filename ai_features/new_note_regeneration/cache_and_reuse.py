@@ -1,4 +1,3 @@
-
 def save_expansion(clean_scrapped_content, chunk_id, topic, knowledge_expansion_collection):
     metadata = {
         "topic": topic#.lower().strip()
@@ -16,18 +15,18 @@ def find_cached_expansion(query, knowledge_expansion_collection):
     )
 
     if not results["ids"] or len(results["ids"][0]) == 0:
-        return "Something is wrong"
+        return "None"
 
-    distances = results["distances"][0]
-    
-    if distances > 0.45:
+    distances = results["distances"][0][0]
+
+    if distances > 0.55:
         knowledge_expansion = results["documents"][0][0]
-        #return "None"
+        return "None"
     
-    elif distances < 0.45:
+    elif distances < 0.55:
         knowledge_expansion = results["documents"][0][0]
 
     else:
-        return "Nothing is inside"
+        return "None"
     
-    return knowledge_expansion, distances
+    return knowledge_expansion#, distances

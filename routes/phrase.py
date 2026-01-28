@@ -11,7 +11,7 @@ def get_phrase():
         phrase = getPhrase()
 
 
-        return jsonify({"data": phrase}), 201
+        return jsonify({"data": phrase}), 200
     except: 
         print("Errror")
 

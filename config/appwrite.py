@@ -43,5 +43,6 @@ COLLECTIONS = {
     "exam_score": os.getenv("APPWRITE_EXAM_COL_ID"),
     "read_time": os.getenv("APPWRITE_READ_COL_ID"),
     "push_tokens": os.getenv("APPWRITE_PUSH_TOKEN_COL_ID"),
-    "credit_history": os.getenv("APPWRITE_CREDIT_HISTORY_COL_ID")
+    "credit_history": os.getenv("APPWRITE_CREDIT_HISTORY_COL_ID"),
+    "exam": os.getenv("APPWRITE_EXAM_COL_ID")
 }
