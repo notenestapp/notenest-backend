@@ -97,12 +97,18 @@ def exam_simulation(image, content, no_of_questions, type_of_question, model):
 
             FORMAT EXACTLY LIKE THIS:
 
-            Q1. <question> 
-            <options>
+            Q1. <question>
+            A. <option>
+            B. <option>
+            C. <option>
+            D. <option>
             A1. <answer>
 
             Q2. <question>
-            <options>
+            A. <option>
+            B. <option>
+            C. <option>
+            D. <option>
             A2. <answer>
 
             Repeat until complete.
@@ -156,12 +162,18 @@ def exam_simulation(image, content, no_of_questions, type_of_question, model):
 
                     FORMAT EXACTLY LIKE THIS:
 
-                    Q1. <question> 
-                    <options>
+                    Q1. <question>
+                    A. <option>
+                    B. <option>
+                    C. <option>
+                    D. <option>
                     A1. <answer>
 
                     Q2. <question>
-                    <options>
+                    A. <option>
+                    B. <option>
+                    C. <option>
+                    D. <option>
                     A2. <answer>
 
                     Repeat until complete.
@@ -182,12 +194,18 @@ def exam_simulation(image, content, no_of_questions, type_of_question, model):
 
                     FORMAT EXACTLY LIKE THIS:
 
-                    Q1. <question> 
-                    <options>
+                    Q1. <question>
+                    A. <option>
+                    B. <option>
+                    C. <option>
+                    D. <option>
                     A1. <answer>
 
                     Q2. <question>
-                    <options>
+                    A. <option>
+                    B. <option>
+                    C. <option>
+                    D. <option>
                     A2. <answer>
 
                     Repeat until complete.
