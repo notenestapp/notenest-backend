@@ -115,13 +115,27 @@ def generate_chapter(note_id, user_id, fileObj: List[T]):
 
 
 
-def fetchAll(user_id: str):
+def fetchAllChapters(user_id: str):
     try:
         chapters = database.list_documents(
             database_id=DB_ID,
             collection_id=CHAPTER_COL,
             queries=[
                 Query.equal("users", user_id),
+                Query.order_desc("$createdAt")
+                ]
+        )
+        return chapters
+    except Exception as e:
+        return e
+    
+def fetchAllNoteChapters(note_id: str):
+    try:
+        chapters = database.list_documents(
+            database_id=DB_ID,
+            collection_id=CHAPTER_COL,
+            queries=[
+                Query.equal("noteId", note_id),
                 Query.order_desc("$createdAt")
                 ]
         )

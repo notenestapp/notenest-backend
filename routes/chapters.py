@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
-from services.chapters_service import create_chapter, get_chapter, query_chapters, update_chapter, delete_chapter, fetchAll, generate_chapter
+from services.chapters_service import create_chapter, get_chapter, query_chapters, update_chapter, delete_chapter, fetchAllChapters, generate_chapter
 from utils.limiter import limiter
 bp = Blueprint("chapters", __name__, url_prefix="/api/chapters")
 
@@ -69,7 +69,7 @@ def generate():
 @bp.get("/user/<user_id>")
 @limiter.limit("10 per minute")
 def fetchAl(user_id):
-    chapters = fetchAll(user_id)
+    chapters = fetchAllChapters(user_id)
     if not chapters: 
         return jsonify({"error": "Not Found"}), 404
     return jsonify({"data": chapters})

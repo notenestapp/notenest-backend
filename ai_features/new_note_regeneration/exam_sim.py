@@ -21,14 +21,32 @@ def run_ocr_and_chunk(image):
 
     return chunk_past_question, cleanup_pastquestion
 
-def LLM_model(model, user_prompt, system_prompt):
+def LLM_model(user_prompt, system_prompt, max_tokens=800):
     print("We are running the model")
-    if model == "gemini":
-        use_model = LLM.gemini(user_prompt, system_prompt)
-    elif model == "LLAMA":
-        use_model = LLM.llama_3_3_70b_versatile2(user_prompt, system_prompt)
-    
-    return use_model
+
+    try:
+        # Always try Gemini first
+        return LLM.gemini(user_prompt, system_prompt)
+
+    except Exception as e:
+        error_message = str(e)
+
+        # Only fallback for transient / infra failures
+        if (
+            "503" in error_message or
+            "UNAVAILABLE" in error_message or
+            "Connection" in error_message
+        ):
+            print("Gemini failed, falling back to LLAMA")
+            return LLM.llama_3_3_70b_versatile2(
+                user_prompt,
+                system_prompt,
+                max_token=max_tokens
+            )
+
+        # Anything else is a real failure
+        raise
+
     
 def exam_simulation(image, content, no_of_questions, type_of_question, model):
     """
@@ -53,6 +71,7 @@ def exam_simulation(image, content, no_of_questions, type_of_question, model):
     """
     user_prompt = f"Create {no_of_questions} practice questions of type {type_of_question} and give their answers"#This will then be when no content and no image
     system_prompt = ""
+    topic = ""
 
     print("Testing, its just taking its sweet time")
 
@@ -60,9 +79,11 @@ def exam_simulation(image, content, no_of_questions, type_of_question, model):
     Past_Question_Database = chroma_database.chroma_db(name)
     
     if image and content:
+        print("All")
         extracted_from_image = run_ocr_and_chunk(image)
         text_from_image = extracted_from_image[1]
         chunked_text_from_image = extracted_from_image[0]
+        print("Done extracting images")
         
         #user_prompt = f"Study this style of asking questions {text_from_image} and in the same level of diffculty, style and method, create {no_of_questions} of practice questions and give their answers from a mix of the study questions and this content: {content} "#and give their answers side by side."
         user_prompt = f"""
@@ -86,12 +107,14 @@ def exam_simulation(image, content, no_of_questions, type_of_question, model):
 
             Repeat until complete.
         """
-        new_questions = LLM.gemini(user_prompt, system_prompt)
 
-        topic = LLM.llama_3_3_70b_versatile2(user_prompt=f"This is a practice question that was generated {new_questions}, give me an appropriate title for the practice questions and give their answers, based on the topic/subject in studies that is covered in this. Do not explain anything and just give the answer", system_prompt="", max_token=10)
+        print("This is the prompt", user_prompt)
+        # new_questions = LLM.gemini(user_prompt, system_prompt)
+
+        # topic = LLM.llama_3_3_70b_versatile2(user_prompt=f"This is a practice question that was generated {new_questions}, give me an appropriate title for the practice questions and give their answers, based on the topic/subject in studies that is covered in this. Do not explain anything and just give the answer", system_prompt="", max_token=10)
 
         for chunk in chunked_text_from_image:
-            chunk_text= chunk["chunk_text"]
+            chunk_text = chunk["chunk_text"]
             chunk_id = chunk["chunk_id"]
             save_the_past_question = cache_and_reuse.save_expansion(chunk_text, chunk_id, topic, Past_Question_Database)
 
@@ -143,31 +166,10 @@ def exam_simulation(image, content, no_of_questions, type_of_question, model):
 
                     Repeat until complete.
                 """
+            
+
                 #user_prompt = f"Study this style of asking questions {text_from_image} and in the same level of diffculty, style and method, create {no_of_questions} of practice questions from a mix of the study questions. These are similar questions gotten from the database:{content} you can repeat these questions if they are relevant and in line with the original or generate new ones based on them and give their answers."
                 #exam_questions = LLM.llama_3_3_70b_versatile2(user_prompt, system_prompt, max_token=500)
-
-            #Content and no image
-            elif not image and content:
-                user_prompt = f"""
-                    Create {no_of_questions} practice questions of type {type_of_question} based on the content of this note: {content}
-
-                    FORMAT RULE (MANDATORY):
-                    Each question must be immediately followed by the options and then its answer.
-                    Even if the input reference was in a different type, create questions in this type {type_of_question}
-                    Do NOT create a separate answers section.
-
-                    FORMAT EXACTLY LIKE THIS:
-
-                    Q1. <question> 
-                    <options>
-                    A1. <answer>
-
-                    Q2. <question>
-                    <options>
-                    A2. <answer>
-
-                    Repeat until complete.
-                """
 
             else:
                 print("No content found in the database")
@@ -190,21 +192,62 @@ def exam_simulation(image, content, no_of_questions, type_of_question, model):
 
                     Repeat until complete.
                     """
+        
+            #Content and no image
+    elif not image and content:
+        print("Content: ", content)
+        user_prompt = f"""
+            Create {no_of_questions} practice questions of type {type_of_question} based on the content of this note: {content}
 
-        new_questions = LLM_model(model, user_prompt, system_prompt)
-        #new_questions = LLM.gemini(user_prompt, system_prompt)
+            FORMAT RULE (MANDATORY):
+            Each question must be immediately followed by the options and then its answer.
+            Even if the input reference was in a different type, create questions in this type {type_of_question}
+            Do NOT create a separate answers section.
+
+            FORMAT EXACTLY LIKE THIS:
+
+            Q1. <question>
+            A. <option>
+            B. <option>
+            C. <option>
+            D. <option>
+            A1. <answer>
+
+            Q2. <question>
+            A. <option>
+            B. <option>
+            C. <option>
+            D. <option>
+            A2. <answer>
+
+            Repeat until complete.
+            If you do not follow the format exactly, the output will be discarded.
+        """
+        # new_questions = LLM_model(model, user_prompt, system_prompt)
+        # #new_questions = LLM.gemini(user_prompt, system_prompt)
 
 
-        topic = LLM.llama_3_3_70b_versatile2(user_prompt=f"This is a practice question that was generated {new_questions}, give me an appropriate title for the practice questions based on the topic/subject in studies that is covered in this. Do not explain anything and just give the answer", system_prompt="", max_token=10)
+        # topic = LLM.llama_3_3_70b_versatile2(user_prompt=f"This is a practice question that was generated {new_questions}, give me an appropriate title for the practice questions based on the topic/subject in studies that is covered in this. Do not explain anything and just give the answer", system_prompt="", max_token=10)
 
-        for chunk in chunked_text_from_image:
-            chunk_text= chunk["chunk_text"]
-            chunk_id = chunk["chunk_id"]
+# There was an error that isnt 503 UNAVAILABLE: Connection error.
+
+    print("User prompt: ", user_prompt)
+    new_questions = LLM_model(user_prompt, system_prompt)
+    print("Done Extracting questions")
+    #new_questions = LLM.gemini(user_prompt, system_prompt)
+
+
+    topic = LLM.llama_3_3_70b_versatile2(user_prompt=f"This is a practice question that was generated {new_questions}, give me an appropriate title for the practice questions based on the topic/subject in studies that is covered in this. Do not explain anything and just give the answer", system_prompt="", max_token=10)
+    print("Topic: ", topic)
+    # if chunked_text_from_image:
+    #     for chunk in chunked_text_from_image:
+    #         chunk_text= chunk["chunk_text"]
+    #         chunk_id = chunk["chunk_id"]
             
-            print(f"\n\n\n This is the chunk id: {chunk_id}\n\n")
+    #         print(f"\n\n\n This is the chunk id: {chunk_id}\n\n")
 
-            save_the_past_question = cache_and_reuse.save_expansion(chunk_text, chunk_id, topic, Past_Question_Database)
-            print(f"Result of saving the expansion: {save_the_past_question}")
+    #         save_the_past_question = cache_and_reuse.save_expansion(chunk_text, chunk_id, topic, Past_Question_Database)
+    #         print(f"Result of saving the expansion: {save_the_past_question}")
     
     #There will be content and no image
     
@@ -212,8 +255,8 @@ def exam_simulation(image, content, no_of_questions, type_of_question, model):
         #For now users will have to either upload a psq or use their note, not none
         #Maybe these guys can input a general topic or something
 
-    else: 
-        new_questions = LLM_model(model, user_prompt, system_prompt)
+    # else: 
+    #     new_questions = LLM_model(model, user_prompt, system_prompt)
         #new_questions = LLM.gemini(user_prompt, system_prompt)
         #When there is no content and no image, we will need to be maybe a topic or something.
 
@@ -281,16 +324,16 @@ def main(image=None, no_of_questions="10", content=None, type_of_questions='mult
     except Exception as e: #To test this thing, simulate an error.
         #print(f"This is the error message: {e}")
         error_message = str(e)#The error mesgae you egt
-        if "503" in error_message or "UNAVAILABLE" in error_message:
-            print("Gemini overloaded and we are switching to LLAMA")
-            model = "LLAMA"
-            LLAMA_model = exam_simulation(image, content, no_of_questions, type_of_questions, model)
-            topic = LLAMA_model[0]
-            new_questions = LLAMA_model[1]
-            print(f"{topic} \n{new_questions}")
-            #return topic, parse_questions(new_questions)
-        else:
-            print(f"There was an error that isnt 503 UNAVAILABLE: {e}") #raise e
+        # if "503" in error_message or "UNAVAILABLE" in error_message:
+        #     print("Gemini overloaded and we are switching to LLAMA")
+        #     model = "LLAMA"
+        #     LLAMA_model = exam_simulation(image, content, no_of_questions, type_of_questions, model)
+        #     topic = LLAMA_model[0]
+        #     new_questions = LLAMA_model[1]
+        #     print(f"{topic} \n{new_questions}")
+        #     #return topic, parse_questions(new_questions)
+        # else:
+        print(f"There was an error that isnt 503 UNAVAILABLE: {e}") #raise e
 
 if __name__ == "__main__":
     image = "exam_sim_test.jpeg"

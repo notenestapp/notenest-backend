@@ -3,7 +3,7 @@ from appwrite.id import ID
 from appwrite.query import Query
 import os
 import json
-from services.chapters_service import get_chapter, fetchAll
+from services.chapters_service import get_chapter, fetchAllChapters, fetchAllNoteChapters
 from ai_features.new_note_regeneration.exam_sim import main
 from utils.file_storage import get_file
 
@@ -74,11 +74,19 @@ def create_exam(data: dict):
 
         elif data['note_id'] and not data['chapter_id'] and not urls:
             print("for note, no chapter, and no images")
-            notes = fetchAll(user_id=data['user_id'])
-            print("Note: ", note, "for note, no chapter, and no images")
+            nots = fetchAllNoteChapters(data['note_id'])
+            notes = nots['documents']
+            print("Note: ", notes, "for note, no chapter, and no images")
             content = ''
-            for note in notes['documents']: 
-                content += note['content_string']
+            for note in notes:
+                con = note.get('content_string')
+
+                if con is None:
+                    continue  # or con = ""
+
+                content += "\n"
+                content += str(con)
+
 
             questions = main(
                 content=content,
