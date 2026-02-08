@@ -395,7 +395,7 @@ def main(notes):
 
             regeneration_scrapped_content = enforce_token_budget(regen_system_prompt, regen_user_prompt, draft_input)
             
-            regenerate_explanation_chunk = LLM.gemini(regeneration_scrapped_content[0], regeneration_scrapped_content[1])
+            regenerate_explanation_chunk = LLM.llama_3_3_70b_versatile2(regeneration_scrapped_content[0], regeneration_scrapped_content[1])
             print(regenerate_explanation_chunk)
             regenerated_note = "".join(regenerate_explanation_chunk)
         else:
@@ -409,7 +409,7 @@ def main(notes):
             
             regeneration_scrapped_content = enforce_token_budget(regen_system_prompt, regen_user_prompt, draft_input)
             
-            regenerate_other_chunk = LLM.gemini(regeneration_scrapped_content[0], regeneration_scrapped_content[1])
+            regenerate_other_chunk = LLM.llama_3_3_70b_versatile2(regeneration_scrapped_content[0], regeneration_scrapped_content[1])
             regenerated_note = "".join(regenerate_other_chunk)
         else:
             pass
@@ -420,14 +420,15 @@ def main(notes):
     try:
         from prompts import merge_regeneration_user_prompt
         
-        merge_user_prompt = merge_regeneration_user_prompt(regenerated_note, youtube_links)
+        merge_half_user_prompt = merge_regeneration_user_prompt(regenerated_note)
         merge_system_prompt = prompts.merge_regeneration_system_prompt
+        merge_user_prompt = f"{merge_half_user_prompt}. Here are the YouTube links you should integrate into the right parts of the note:{youtube_links}"
         
 
         merging = enforce_token_budget(merge_system_prompt, merge_user_prompt, final_merge_input)
 
         print(f"This is the merging system prompt, I am checking to find the YouTube lnks to be in the note. {merging[0]}\n and this is the user prompt{merging[1]}")
-        final_note = LLM.gemini(merging[0], merging[1])
+        final_note = LLM.llama_3_3_70b_versatile2(merging[0], merging[1])
 
         #print(f"-----✅This is the final note{final_note}")
 
@@ -441,7 +442,7 @@ def main(notes):
     except Exception as e:
         print(f"Failed merging the final note: {e}")
 
-    return final_note, topic
+    
 
 
 if __name__ == "__main__":
