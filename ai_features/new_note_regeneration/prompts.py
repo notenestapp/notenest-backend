@@ -1,5 +1,4 @@
 
-
 #When a new chunk is to be scraped, it is ran across this sample dataset to classify it into Example, Explanation, etc.
 reference_chunks = [
     {"chunk_id": "ref_explanation_1", "chunk_text": "An explanation describes or clarifies how or why something happens, often starting with phrases like 'this means' or 'in simple terms'."},
@@ -146,11 +145,9 @@ def regeneration_user_prompt(chunk_text, knowledge_expansion):
     return user_prompt
 
 
-def merge_regeneration_user_prompt(regenerated_note, youtube_links):
+def merge_regeneration_user_prompt(regenerated_note):
     user_prompt = f"""
     Here are the regenerated chunks in order:{regenerated_note}
-
-    Here are the YouTube links you should integrate into the right parts of the note:{youtube_links}
 
     Task:
     1. Merge the chunks cleanly in the correct order.
@@ -165,7 +162,6 @@ def merge_regeneration_user_prompt(regenerated_note, youtube_links):
 
 
 merge_regeneration_system_prompt = """
-    You are NoteNest, an educational assistant.
     Merge the provided regenerated chunks in the exact order given.
     Ensure smooth, natural transitions.
     Do not repeat sections or introduce new concepts.

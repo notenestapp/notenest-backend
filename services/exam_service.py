@@ -43,7 +43,7 @@ def create_exam(data: dict):
 
         elif urls and data['note_id'] and not data['chapter_id']:
             print("for note, no chapter, and images")
-            notes = fetchAll(user_id=data['user_id'])
+            notes = fetchAllNoteChapters(data['note_id'])
             print("Note: ", notes, "for note, no chapter, and images")
             content = ''
             for note in notes['documents']: 
@@ -74,6 +74,7 @@ def create_exam(data: dict):
 
         elif data['note_id'] and not data['chapter_id'] and not urls:
             print("for note, no chapter, and no images")
+            print("Note Id: ", data['note_id'])
             nots = fetchAllNoteChapters(data['note_id'])
             notes = nots['documents']
             print("Note: ", notes, "for note, no chapter, and no images")

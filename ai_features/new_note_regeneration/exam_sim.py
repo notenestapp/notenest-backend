@@ -283,41 +283,76 @@ def exam_simulation(image, content, no_of_questions, type_of_question, model):
     return topic, new_questions
 
 
+def segment_text_and_equations(s: str):
+    """
+    Splits a string into ordered segments of text and equations.
+    Equations are assumed to be wrapped in $...$.
+    """
+    segments = []
+    pattern = re.compile(r"\$(.+?)\$")
+    last_idx = 0
+
+    for match in pattern.finditer(s):
+        start, end = match.span()
+
+        # Text before equation
+        if start > last_idx:
+            text = s[last_idx:start].strip()
+            if text:
+                segments.append({"text": text})
+
+        # Equation itself
+        eq = match.group(1).strip()
+        if eq:
+            segments.append({"equation": eq})
+
+        last_idx = end
+
+    # Remaining text
+    if last_idx < len(s):
+        tail = s[last_idx:].strip()
+        if tail:
+            segments.append({"text": tail})
+
+    return segments
+
+
+
 def parse_questions(text: str):
     questions = {}
 
-    # Split text by question numbers
     blocks = re.split(r"\n(?=Q\d+\.)", text.strip())
 
     for block in blocks:
-        # Match question number and text
-        q_match = re.search(r"Q(\d+)\.\s*(.*)", block)
+        q_match = re.search(r"Q(\d+)\.\s*(.*)", block, re.DOTALL)
         if not q_match:
             continue
 
         q_num = q_match.group(1)
-
-        # Skip duplicate questions
         if q_num in questions:
             continue
 
-        # Extract question text (until first option)
-        question_text = re.split(r"\nA\.", block, maxsplit=1)[0]
-        question_text = question_text.replace(f"Q{q_num}.", "").strip()
+        # Extract question body (before first option)
+        question_body = re.split(r"\nA\.", block, maxsplit=1)[0]
+        question_body = question_body.replace(f"Q{q_num}.", "").strip()
+
+        question_segments = segment_text_and_equations(question_body)
 
         # Extract options
-        options = dict(re.findall(r"\n([A-D])\.\s*(.+)", block))
+        raw_options = re.findall(r"\n([A-D])\.\s*(.+)", block)
+        options = {}
+
+        for letter, opt_text in raw_options:
+            options[letter] = segment_text_and_equations(opt_text.strip())
 
         # Extract answer
         answer_match = re.search(rf"A{q_num}\.\s*([A-D])", block)
         answer = answer_match.group(1) if answer_match else None
 
-        questions[q_num] = {
-            f"Q{q_num}": {
-                "question": question_text,
-                "options": options,
-                "answer": answer
-            }
+        questions[f"Q{q_num}"] = {
+            "question": question_segments,
+            "options": options,
+            "answer": answer
         }
 
     return list(questions.values())

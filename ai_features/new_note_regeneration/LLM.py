@@ -78,7 +78,7 @@ def llama_3_1_8b_instant(system_prompt, user_prompt, max_token):
     return response
 
 #The LLM for regeneration.
-def llama_3_3_70b_versatile2(system_prompt, user_prompt, max_token):
+def llama_3_3_70b_versatile2(system_prompt, user_prompt, max_token=800):
     client = Groq(api_key=GROQ_API_KEY)
     completion = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
