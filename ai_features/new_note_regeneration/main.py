@@ -2,15 +2,40 @@ import re
 import requests
 import time
 import os
-from ai_features.new_note_regeneration.chroma_database import chroma_db
-from ai_features.new_note_regeneration.text_chunking import count_tokens, chunk_text_by_tokens, enforce_token_budget
-from ai_features.new_note_regeneration.prompts import note_cleanup_user_prompt, classification_user_prompt, search_queries_system_prompt, generate_example_question, generate_explanation_question, generate_general_questions, regeneration_user_prompt, regeneration_system_prompt, merge_regeneration_user_prompt, merge_regeneration_system_prompt
-from ai_features.new_note_regeneration import prompts
-from ai_features.new_note_regeneration.text_extraction import run_ocr, extract_pdf, extract_docx
-from ai_features.new_note_regeneration.LLM import llama_3_1_8b_instant, qwen_qwen3_32b, llama_3_3_70b_versatile2, llama_3_1_8b_instant, gemini
-from ai_features.new_note_regeneration.cache_and_reuse import find_cached_expansion, save_expansion
-from ai_features.new_note_regeneration.search_and_scrape import build_payload, make_requests, scraped_content, clean_scraped_text
+
 from dotenv import load_dotenv
+
+# Local / project imports
+from ai_features.new_note_regeneration import LLM
+from ai_features.new_note_regeneration import prompts
+
+from ai_features.new_note_regeneration.text_extraction import run_ocr, extract_pdf, extract_docx
+from ai_features.new_note_regeneration.text_chunking import count_tokens, chunk_text_by_tokens, enforce_token_budget
+from ai_features.new_note_regeneration.cache_and_reuse import find_cached_expansion, save_expansion
+from ai_features.new_note_regeneration.chroma_database import chroma_db
+from ai_features.new_note_regeneration.search_and_scrape import (
+    build_payload,
+    make_requests,
+    scraped_content,
+    clean_scraped_text,
+)
+
+from ai_features.new_note_regeneration.prompts import (
+    note_cleanup_user_prompt,
+    classification_user_prompt,
+    search_queries_system_prompt,
+    generate_example_question,
+    generate_explanation_question,
+    generate_general_questions,
+    regeneration_user_prompt,
+    merge_regeneration_user_prompt,
+)
+
+from ai_features.new_note_regeneration.LLM import (
+    llama_3_1_8b_instant,
+    llama_3_3_70b_versatile2,
+)
+
 
 load_dotenv()
 
@@ -69,7 +94,6 @@ def main(notes):
     
     #When user inputs the text, we will count the tokens and if it exceed, split it and clean both, then join both
 
-    
     model = "llama-3.1-8b-instant"
     token_count = count_tokens(text, model)
 
@@ -106,7 +130,6 @@ def main(notes):
 
                 cleanup_user_prompt = note_cleanup_user_prompt(text)
 
-
                 clean_text += llama_3_1_8b_instant(note_cleanup_system_prompt, cleanup_user_prompt, clean_text_output)
                 
                 cleanedup_text += "".join(clean_text)
@@ -125,7 +148,6 @@ def main(notes):
     #STEP 6: CLASSIFICATION THEN CACHE AND REUSE
     try:
         name = "NoteNest_Vector_Database"
-
         NoteNest_Vector_Database = chroma_db(name)#The database for knowledge expansion
         chunk_number = 0
         regenerated_note = ""
@@ -155,7 +177,6 @@ def main(notes):
                 print("----NO INFORMATION COULD BE FOUND IN THE DATABASE SO A SEARCH HAS TO BE RUN.-----\n")
 
                 #from LLM import qwen_qwen3_32b #Import the llm
-
 
                 #For classification of the chunk
                 class_system_prompt = prompts.classification_system_prompt
@@ -241,13 +262,11 @@ def main(notes):
             else:
                 pass
 
-
             regen_system_prompt = prompts.regeneration_system_prompt
 
             #This one works. When result is found, even if it is an empty list, it regenerates the note
             if cached_expansion != "None":
                 try:
-
                     #Take the text and pass into an LLM
                     print("\n----USING INFORMATION GOTTEN FROM THE KNOWLEDGE EXPANSION DATABASE----\n")
 
@@ -274,7 +293,6 @@ def main(notes):
                 topic = ""
                 clean_explanation_scraped_content = ""
                 clean_other_scraped_content = ""
-
 
 
                 #QUERYING GOOGLE AND SCRAPING THE EXPLANATION CHUNK
@@ -393,7 +411,7 @@ def main(notes):
 
             regeneration_scrapped_content = enforce_token_budget(regen_system_prompt, regen_user_prompt, draft_input)
             
-            regenerate_explanation_chunk = gemini(regeneration_scrapped_content[0], regeneration_scrapped_content[1])
+            regenerate_explanation_chunk = LLM.llama_3_3_70b_versatile2(regeneration_scrapped_content[0], regeneration_scrapped_content[1])
             print(regenerate_explanation_chunk)
             regenerated_note = "".join(regenerate_explanation_chunk)
         else:
@@ -407,7 +425,7 @@ def main(notes):
             
             regeneration_scrapped_content = enforce_token_budget(regen_system_prompt, regen_user_prompt, draft_input)
             
-            regenerate_other_chunk = gemini(regeneration_scrapped_content[0], regeneration_scrapped_content[1])
+            regenerate_other_chunk = LLM.llama_3_3_70b_versatile2(regeneration_scrapped_content[0], regeneration_scrapped_content[1])
             regenerated_note = "".join(regenerate_other_chunk)
         else:
             pass
@@ -415,40 +433,38 @@ def main(notes):
     except Exception as e:
         print(f"There was an error regeneration the chunks. Error {e}")
 
-    try:
+    
 
+    try:
         
-        merge_user_prompt = merge_regeneration_user_prompt(regenerated_note, youtube_links)
-        merge_system_prompt = merge_regeneration_system_prompt
+        merge_half_user_prompt = merge_regeneration_user_prompt(regenerated_note)
+        merge_system_prompt = prompts.merge_regeneration_system_prompt
+        merge_user_prompt = f"{merge_half_user_prompt}. Here are the YouTube links you should integrate into the right parts of the note:{youtube_links}"
         
 
         merging = enforce_token_budget(merge_system_prompt, merge_user_prompt, final_merge_input)
 
         print(f"This is the merging system prompt, I am checking to find the YouTube lnks to be in the note. {merging[0]}\n and this is the user prompt{merging[1]}")
-        final_note = gemini(merging[0], merging[1])
+        final_note = LLM.llama_3_3_70b_versatile2(merging[0], merging[1], max_token=global_output_limit)
 
         #print(f"-----✅This is the final note{final_note}")
 
         token = final_note.split()
         trauncate_final_note = " ".join(token[:100])
         #print(f"This is the trauncated note to use and create the topic {trauncate_final_note}")
-        topic = llama_3_3_70b_versatile2(user_prompt=f"This is a regenerated note {trauncate_final_note}, give me an appropriate title for this note based on the topic/subject in studies that is covered in this. Do not explain anything and just give the answer", system_prompt="", max_token=10)
+        topic = LLM.llama_3_3_70b_versatile2(user_prompt=f"This is a regenerated note {trauncate_final_note}, give me an appropriate title for this note based on the topic/subject in studies that is covered in this. Do not explain anything and just give the answer", system_prompt="", max_token=10)
 
         #print(topic)
 
+        return final_note, topic
+
     except Exception as e:
         print(f"Failed merging the final note: {e}")
+        raise e
 
-    return final_note, topic
-
-
-if __name__ == "__main__":
-    notes = ["test_image2.jpg"]
-    main(notes)
     
-# if __name__ == "__main__":
-#     notes = ["test_image2.jpg"]
-#     main(notes)
+
+    
 
 
 # if __name__ == "__main__":
