@@ -5,6 +5,8 @@ import os
 import json
 from services.chapters_service import get_chapter, fetchAllChapters, fetchAllNoteChapters
 from ai_features.new_note_regeneration.exam_sim import main
+from services.credit_history_service import create_credit_record
+from services.user_service import get_user, update_user
 from utils.file_storage import get_file
 
 EXAM_COL = COLLECTIONS['exam']
@@ -12,14 +14,7 @@ DB_ID = os.getenv("APPWRITE_DATABASE_ID")
 
 def create_exam(data: dict):
     try: 
-#         # Call exam function here
-        # questions = [{
-        #     'Q1': {'question': 'Miller indices are primarily used to describe which of the following in a crystal lattice?', 'options': {'A': 'The position of a single atom', 'B': 'The orientation of a plane within a space lattice', 'C': 'The velocity of an electron through the crystal', 'D': 'The total weight of the unit cell'}, 'answer': 'B'}}, 
-        #     {'Q2': {'question': 'What is the first step in the procedure for finding the Miller indices of a plane?', 'options': {'A': 'Take the reciprocal of the intercepts', 'B': 'Enclose the indices in parentheses', 'C': 'Find the intercepts of the plane along the axes (x, y, z)', 'D': 'Reduce the numbers to the smallest integers'}, 'answer': 'C'}}, 
-        #     {'Q3': {'question': 'If a plane is parallel to an axis and never intersects it, the intercept is considered to be at infinity (∞). What is the corresponding Miller index for that axis?', 'options': {'A': '1', 'B': '∞', 'C': '0', 'D': '-1'}, 'answer': 'C'}}, 
-        #     {'Q4': {'question': 'Which of the following formulas is used to calculate the distance (d) between adjacent parallel planes of indices (h, k, l) for a cubic lattice?', 'options': {'A': 'd = a / (h + k + l)', 'B': 'd = a / (√(h² + k² + l²))', 'C': 'd = a · (√(h² + k² + l²))', 'D': 'd = √(h² + k² + l²) / a'}, 'answer': 'B'}}, 
-        #     {'Q5': {'question': 'A plane has intercepts at 1a, 1b, and 1c. What are the Miller indices for this plane?', 'options': {'A': '(1 1 1)', 'B': '(0 0 0)', 'C': '(∞ ∞ ∞)', 'D': '(1 0 0)'}, 'answer': 'A'}}]
-        
+
         questions = []
         urls = []
 
@@ -95,7 +90,7 @@ def create_exam(data: dict):
             )
             
 
-        print("Done", questions, "now, saving to the database")
+   
 
         new_doc = database.create_document(
             database_id=DB_ID,
@@ -106,7 +101,24 @@ def create_exam(data: dict):
                 "users": data['user_id']
             }
         )
-        print("New Doc", new_doc)
+        if (new_doc['questions']):
+            # IF EXAM GENERATION IS SUCCESSFUL
+            record = create_credit_record({"user_id": data['user_id'], "amount": int(data['cost']), "title": "Exam Generation", "type": "debit",})
+
+            user = get_user(data['user_id'])
+            
+            if (user["isSubscribed"] == False):
+                initial_credit = user['credits']
+
+                final_credit = int(initial_credit) - int(data['cost'])
+
+                update_user(data['user_id'], {
+                    "credits": final_credit
+                })
+
+
+
+
 
 
         return new_doc

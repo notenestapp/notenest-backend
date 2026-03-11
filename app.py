@@ -19,6 +19,7 @@ from routes.read_time import bp as read_bp
 from routes.push import bp as push_bp
 from routes.credit_history import bp as credits_bp
 from routes.exam import bp as exams_bp
+from routes.cost import bp as cost_bp
 
 from utils.error import register_error_handlers
 from utils.limiter import limiter
@@ -52,6 +53,7 @@ app.register_blueprint(read_bp)
 app.register_blueprint(push_bp)
 app.register_blueprint(credits_bp)
 app.register_blueprint(exams_bp)
+app.register_blueprint(cost_bp)
 
 
 # --- Metrics tracking -------------------------------------------------

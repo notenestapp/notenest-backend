@@ -24,6 +24,7 @@ def fetchAll():
     
 ALLOWED_FILTERS = {
     "type": "type",
+    "title": "title",
 }
 
 def query_plans(filters):

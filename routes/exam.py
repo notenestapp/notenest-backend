@@ -17,6 +17,7 @@ def create():
     user_id = request.form.get("user_id")
     no_of_questions = request.form.get("no_of_questions")
     chapter_id = request.form.get("chapter_id")
+    cost = request.form.get("cost")
 
 
     files_obj = request.files.getlist("files")
@@ -31,7 +32,7 @@ def create():
     # )
 
     
-    exam = create_exam({"note_id": note_id, "user_id": user_id, "no_of_questions": no_of_questions, "chapter_id": chapter_id, "files": files_obj})
+    exam = create_exam({"note_id": note_id, "user_id": user_id, "no_of_questions": no_of_questions, "chapter_id": chapter_id, "files": files_obj, "cost": cost})
     return jsonify({"data": exam}), 201
 
 
