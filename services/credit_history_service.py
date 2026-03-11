@@ -14,7 +14,8 @@ def create_credit_record(data: dict):
     try:
         user_id = data.get("user_id")
         amount = data.get("amount")
-        title = data.get("title"),
+        title = data['title']
+        print("This is the title: ", title)
         typ = data.get("type")
         
         new_doc = database.create_document(
@@ -41,7 +42,7 @@ def get_credit_history(user_id: str):
         results = database.list_documents(
             database_id=DB_ID,
             collection_id=CREDIT_HISTORY_COL,
-            queries=[Query.equal("users", user_id)]
+            queries=[Query.equal("users", user_id), Query.order_desc("$createdAt")]
         )
         return results['documents']
     
