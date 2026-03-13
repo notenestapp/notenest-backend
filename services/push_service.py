@@ -127,12 +127,15 @@ def handle_expo_responses(messages, results):
                     database_id=DB_ID,
                     collection_id=TOKEN_COL,
                     queries=[
-                        Query.equal("tokens", token_str),
+                        Query.equal("token", token_str),
                         Query.equal("is_active", True)
                         ]
                         )
-                token_obj = tokens_documents['documents'][0]
-                if token_obj:
+                
+                # ✅ FIX: Safely check if documents exist before accessing index 0
+                docs = tokens_documents.get('documents', [])
+                if len(docs) > 0:
+                    token_obj = docs[0]
                     res = database.update_document(
                     database_id=DB_ID,
                     collection_id=TOKEN_COL,
@@ -142,8 +145,6 @@ def handle_expo_responses(messages, results):
                     }
                 )
                     print(f"Deactivated token {token_str} due to {code}")
-
-
 
 
 
