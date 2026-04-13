@@ -46,6 +46,9 @@ def initialize_payment():
 def callback():
     try:
         reference = request.args.get("reference")
+        tx_ref = request.args.get("tx_ref") or request.args.get("txRef")
+        transaction_id = request.args.get("transaction_id") or request.args.get("transactionId") or request.args.get("id")
+        provider = request.args.get("provider")
         transactionId = request.args.get('transactionId')
         # accept both variants (snake_case or camelCase) that might be present
         payment_type = request.args.get("payment_type") or request.args.get("paymentType")
@@ -56,7 +59,10 @@ def callback():
         user_credits = request.args.get('user_credits')
 
         response = payment_callback({
+            "provider": provider,
             "reference": reference,
+            "tx_ref": tx_ref,
+            "transaction_id": transaction_id,
             "transactionId": transactionId,
             "payment_type": payment_type,
             "payment_title": payment_title,
