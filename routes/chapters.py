@@ -42,6 +42,7 @@ def generate():
 
         note_id = request.form.get("note_id")
         user_id = request.form.get("user_id")
+        cost = request.form.get("cost")
         if not note_id:
             return jsonify({"error": "note_id missing"}), 400
 
@@ -54,7 +55,7 @@ def generate():
             [f.filename for f in files_obj]
         )
 
-        response = generate_chapter(note_id, user_id, files_obj)
+        response = generate_chapter(note_id, user_id, files_obj, cost)
         return jsonify({"data": response})
 
     except ClientDisconnected:

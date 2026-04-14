@@ -8,6 +8,7 @@ from services.push_service import send_push_notification
 from services.user_service import get_user
 from services.notes_service import get_note, update_note
 from utils.text_standardizer import parse_to_sections, extract_dynamic_title
+from services.credit_history_service import create_credit_record
 from utils.file_storage import get_file
 import json
 
@@ -46,7 +47,7 @@ def cut_text(text: str, length: int = 70) -> str:
     return text[:length]
 
 
-def generate_chapter(note_id, user_id, fileObj: List[T]):
+def generate_chapter(note_id, user_id, fileObj: List[T], cost: int):
     try:
         urls = []
 
@@ -106,6 +107,20 @@ def generate_chapter(note_id, user_id, fileObj: List[T]):
         update_note(note_id=note_id, data={
             "last_num": number,
         })
+
+
+        record = create_credit_record({"user_id": user_id, "amount": int(cost), "title": "Note Regeneration", "type": "debit",})
+
+        user = get_user(data['user_id'])
+        
+        if (user["isSubscribed"] == False):
+            initial_credit = user['credits']
+
+            final_credit = int(initial_credit) - int(cost)
+
+            update_user(user_id, {
+                "credits": final_credit
+            })
 
         return response
 

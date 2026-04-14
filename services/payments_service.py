@@ -9,6 +9,7 @@ import secrets
 import requests
 from services.subscriptions_service import create_subscription, fetchUserSubs, update_subscription
 from services.user_service import update_user
+from services.payment_providers.resolver import get_payment_provider, normalize_provider
 
 
 
@@ -132,13 +133,14 @@ def get_start_and_end(lasting: int):
 def init_payment(data: dict):
     try:
         email = data.get("email")
-        amount = data.get("amount")
+        amount = data.get("amount")  # frontend sends kobo
         user = data.get("user")
         metadata = data.get("metadata", {})
         payment_type = data.get("payment_type")
         payment_title = data.get("title")
         lasting = data.get("lasting")
         credits = data.get('credits')
+        provider = normalize_provider(data.get("provider"))
         print("Payment for: ", user['username'], "Amount: ", amount, "Payment Type: ", payment_type)
 
         # transaction = database.create_document(
@@ -164,40 +166,42 @@ def init_payment(data: dict):
         reference = secrets.token_hex(16)
         
 
-        params = {"transactionId": transaction['$id'], "paymentType": payment_type, 'payment_title': payment_title, "lasting": lasting, "user_id": user['$id'], 'credits': credits, "user_credits": user['credits']}
+        params = {
+            "transactionId": transaction['$id'],
+            "paymentType": payment_type,
+            "payment_title": payment_title,
+            "lasting": lasting,
+            "user_id": user['$id'],
+            "credits": credits,
+            "user_credits": user['credits'],
+            "provider": provider,
+            # include a reference for providers that don't append `reference=...` (Flutterwave uses tx_ref)
+            "reference": reference,
+        }
         callback_url = f"https://notenest-backend.duckdns.org/api/payments/callback?{urllib.parse.urlencode(params)}"
 
-
-        payload = { 
-            "email" : email,
-            "amount": amount,
-            "reference": reference,
-            "metadata" : metadata,
-            "callback_url": callback_url
-        }
-
-
-        headers = {
-            "Authorization" : f"Bearer {os.getenv('PAYSTACK_SECRET_KEY')}",
-            "Content-Type" : "application/json",
-        }
-
-        response = requests.post(
-            f"{os.getenv('PAYSTACK_BASE_URL')}/transaction/initialize",
-            json=payload,
-            headers=headers
+        payment_provider = get_payment_provider(provider)
+        init_res = payment_provider.initialize_payment(
+            email=email,
+            amount_kobo=int(amount),
+            currency="NGN",
+            reference=reference,
+            callback_url=callback_url,
+            metadata=metadata,
         )
 
-        res_data = response.json()
-
-        
-
-        return {
+        # Normalized response (frontend can use `checkout_url` for all providers)
+        response = {
             "status": True,
-            "authorization_url": res_data['data']['authorization_url'],
+            "provider": provider,
+            "checkout_url": init_res.checkout_url,
+            "authorization_url": init_res.checkout_url,
             "reference": reference,
-            "transactionId": transaction['$id']
+            "transactionId": transaction['$id'],
         }
+
+
+        return response
     
     except Exception as e:
         print("An error occurred", e)
@@ -217,7 +221,10 @@ def payment_callback(data: dict):
     #     "credits": credits,
     #     "user_credits": user_credits,
     try:
-        reference = data["reference"]
+        provider = normalize_provider(data.get("provider"))
+        reference = data.get("reference")
+        if not reference:
+            reference = data.get("tx_ref") or data.get("txRef")
         transactionId =  data["transactionId"]
         payment_type = data["payment_type"]
         payment_title = data["payment_title"]
@@ -226,10 +233,7 @@ def payment_callback(data: dict):
         credits = data['credits']
         user_credits = data['user_credits']
 
-        if not reference or not transactionId:
-            result = update_payment(transactionId, data={
-                "status": "failed"
-            })
+        if not transactionId:
             # result = database.update_document(
             #     database_id=appwriteConfig['databaseId'],
             #     collection_id=appwriteConfig["paymentCollectionId"],
@@ -240,12 +244,17 @@ def payment_callback(data: dict):
             # )
             return 'payment_not_found.html'
 
-        # Verify transaction with Paystack
-        headers = {"Authorization": f"Bearer {os.getenv('PAYSTACK_SECRET_KEY')}" }
-        res = requests.get(f"{os.getenv('PAYSTACK_BASE_URL')}/transaction/verify/{reference}", headers=headers)
-        result = res.json()
+        if not reference:
+            update_payment(transactionId, data={"status": "failed"})
+            return 'payment_not_found.html'
 
-        if result["data"]["status"] == "success":
+        payment_provider = get_payment_provider(provider)
+        verify_res = payment_provider.verify_payment(
+            reference=reference,
+            provider_payload=data,
+        )
+
+        if verify_res.success:
 
             result = update_payment(
                 payment_id=transactionId, 
@@ -324,10 +333,10 @@ def payment_callback(data: dict):
 
         
         result = update_payment(
-                payment_id=transactionId, 
-                data={
-                    "status": "failed"
-                })
+            payment_id=transactionId,
+            data={
+                "status": "failed"
+            })
         return "payment_unsuccess.html"
 
     except Exception as e:
