@@ -26,6 +26,7 @@ class FlutterwaveProvider:
     ) -> NormalizedInitResponse:
         base_url = os.getenv("FLUTTERWAVE_BASE_URL", "https://api.flutterwave.com").rstrip("/")
         secret_key = os.getenv("FLUTTERWAVE_SECRET_KEY")
+
         if not secret_key:
             raise RuntimeError("FLUTTERWAVE_SECRET_KEY is not set")
 

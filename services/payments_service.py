@@ -195,13 +195,11 @@ def init_payment(data: dict):
             "status": True,
             "provider": provider,
             "checkout_url": init_res.checkout_url,
+            "authorization_url": init_res.checkout_url,
             "reference": reference,
             "transactionId": transaction['$id'],
         }
 
-        # Backward compatibility for existing Paystack frontend usage
-        if provider == "paystack":
-            response["authorization_url"] = init_res.checkout_url
 
         return response
     

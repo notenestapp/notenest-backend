@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from services.push_service import create_token
+from services.push_service import create_token, send_push_notification
 
 bp = Blueprint("push", __name__, url_prefix="/api/push")
 
@@ -21,3 +21,35 @@ def register_push_token():
     )
 
     return jsonify({"message": "Token registered successfully"}), 201
+
+
+@bp.post("/send")
+def send_push_notification_route():
+    data = request.get_json()
+    user_id = data.get("user_id")
+    title = data.get("title")
+    body = data.get("body")
+    data = data.get("data")
+
+    if not user_id or not title or not body:
+        return jsonify({"error": "user_id, title and body are required"}), 400
+
+    send_push_notification(user_id=user_id, title=title, body=body, data=data)
+
+    return jsonify({"message": "Push notification sent successfully"}), 200
+
+
+# def notify_user(payload: dict, authorization: str = Header(None)):
+#     if authorization != f"Bearer {os.getenv('INTERNAL_API_KEY')}":
+#         raise HTTPException(status_code=403, detail="Unauthorized")
+
+#     user_id = payload.get("user_id")
+#     title = payload.get("title")
+#     body = payload.get("body")
+
+#     if not user_id:
+#         raise HTTPException(status_code=400, detail="Missing user_id")
+
+#     send_push_notification(user_id, title, body)
+
+#     return {"success": True}
